@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+
 package simdjson_benchmarks
 
 import (
@@ -26,7 +28,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/klauspost/compress/zstd"
 
-	simdjson "github.com/minio/simdjson-go"
+	simdjson "github.com/soulteary/otterio-kits/simdjson-go"
 )
 
 func benchmarkEncodingJson(b *testing.B, filename string) {

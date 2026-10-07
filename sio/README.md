@@ -1,3 +1,5 @@
+> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/sio`, based on MinIO `sio` `v0.5.1`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
+
 [![Go Reference](https://pkg.go.dev/badge/github.com/minio/sio.svg)](https://pkg.go.dev/github.com/minio/sio)
 [![Go](https://github.com/minio/sio/actions/workflows/go.yml/badge.svg)](https://github.com/minio/sio/actions/workflows/go.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/minio/sio)](https://goreportcard.com/report/github.com/minio/sio)
@@ -57,14 +59,14 @@ Its main properties are:
 - Support for long data streams - up to 256 TB under the same key
 - Random access - arbitrary sequences / ranges can be decrypted independently
 
-**Install:** `go get -u github.com/minio/sio`
+**Install:** `go get -u github.com/soulteary/otterio-kits/sio`
 
 DARE and `github.com/minio/sio` are stable and production-ready.
 
 We also provide a CLI tool to en/decrypt arbitrary data streams directly from
 your command line:
 
-**Install ncrypt:** `go install github.com/minio/sio/cmd/ncrypt@latest && ncrypt -h`
+**Install ncrypt:** `go install github.com/soulteary/otterio-kits/sio/cmd/ncrypt@latest && ncrypt -h`
 
 ## Contributing
 

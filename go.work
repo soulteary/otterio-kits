@@ -1,0 +1,10 @@
+go 1.24.0
+
+use (
+	./highwayhash
+	./sha256-simd
+	./simdjson-go
+	./sio
+	./crc64nvme
+	./md5-simd
+)

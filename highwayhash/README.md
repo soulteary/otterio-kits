@@ -1,3 +1,5 @@
+> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/highwayhash`, based on MinIO `highwayhash` `v1.0.4`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
+
 [![Godoc Reference](https://godoc.org/github.com/minio/highwayhash?status.svg)](https://godoc.org/github.com/minio/highwayhash)
 [![Build Status](https://travis-ci.org/minio/highwayhash.svg?branch=master)](https://travis-ci.org/minio/highwayhash)
 
@@ -21,7 +23,7 @@ All three output sizes of HighwayHash have been declared [stable](https://github
 
 ### Installation
 
-Install: `go get -u github.com/minio/highwayhash`
+Install: `go get -u github.com/soulteary/otterio-kits/highwayhash`
 
 ### Intel Performance
 

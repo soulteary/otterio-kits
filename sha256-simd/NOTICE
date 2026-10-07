@@ -1,0 +1,21 @@
+otterio-kits / sha256-simd
+
+This module is independently maintained as part of otterio-kits.
+Imported source baseline:
+  https://github.com/minio/sha256-simd/tree/v1.0.1
+
+Original Minio Inc. copyright notices are retained in the source files.
+See LICENSE for the Apache License, Version 2.0 terms.
+
+Copyright (c) 2009 The Go Authors. All rights reserved.
+  sha256_test.go; see LICENSE.Golang for BSD-3-Clause terms.
+
+Kristofer Peterson, (C) 2018.
+  sha256block_amd64.s; Apache License, Version 2.0.
+
+Upstream acknowledges Intel intel-ipsec-mb and jocover/sha256-armv8 as
+implementation sources. The original source attribution statements are
+retained in README.md and sha256block_arm64.s.
+
+This notice identifies original software sources and their applicable
+license files. It does not replace those license terms or source notices.

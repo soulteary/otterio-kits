@@ -1,4 +1,5 @@
-module github.com/minio/sio
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+module github.com/soulteary/otterio-kits/sio
 
 go 1.24.0
 

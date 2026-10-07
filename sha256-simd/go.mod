@@ -1,4 +1,5 @@
-module github.com/minio/sha256-simd
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+module github.com/soulteary/otterio-kits/sha256-simd
 
 go 1.17
 

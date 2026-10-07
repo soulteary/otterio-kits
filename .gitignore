@@ -1,0 +1,5 @@
+# Local workspace dependency sums; each released module owns its go.sum.
+/go.work.sum
+# Local cross-compiled test binaries and common editor files.
+*.test
+.DS_Store

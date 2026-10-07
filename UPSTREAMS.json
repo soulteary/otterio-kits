@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "imported_on": "2026-10-08",
+  "history_method": "git subtree add without --squash; complete ancestry of each pinned tag",
+  "pre_import_commit": "0855462506b24f78b77837ca004ee5043696bfc3",
+  "modules": [
+    {
+      "name": "highwayhash",
+      "directory": "highwayhash",
+      "module": "github.com/soulteary/otterio-kits/highwayhash",
+      "upstream": {
+        "repository": "https://github.com/minio/highwayhash.git",
+        "default_branch": "master",
+        "tag": "v1.0.4",
+        "commit": "070ab1a87a76ab3c81950392f2991dc0ba638585",
+        "tree": "b68bc301c91cc97b6788bcf6d48f18bd2274cd34",
+        "history_ref": "refs/tags/upstream/highwayhash/v1.0.4",
+        "commit_count": 74
+      },
+      "import": {
+        "commit": "64a6c5bc32d33e94c9e80ef5a2d52de013db292c"
+      },
+      "licenses": [
+        "LICENSE"
+      ],
+      "local_changes": {
+        "scope": "Module identity, self-imports, install examples and license/maintenance notices only; algorithms unchanged.",
+        "modified_upstream_files": [
+          "highwayhash/go.mod",
+          "highwayhash/README.md"
+        ]
+      },
+      "upstream_patches": [],
+      "updates": []
+    },
+    {
+      "name": "sha256-simd",
+      "directory": "sha256-simd",
+      "module": "github.com/soulteary/otterio-kits/sha256-simd",
+      "upstream": {
+        "repository": "https://github.com/minio/sha256-simd.git",
+        "default_branch": "master",
+        "tag": "v1.0.1",
+        "commit": "6096f891a77bfe490cbea7a424c821b5fdb92849",
+        "tree": "a6404ef4a96c8948a52d752781f35dbc2f40624f",
+        "history_ref": "refs/tags/upstream/sha256-simd/v1.0.1",
+        "commit_count": 92
+      },
+      "import": {
+        "commit": "62753cf46186b1345981718538304fe061cfe03d"
+      },
+      "licenses": [
+        "LICENSE",
+        "LICENSE.Golang"
+      ],
+      "local_changes": {
+        "scope": "Module identity, self-imports, install examples and license/maintenance notices only; algorithms unchanged.",
+        "modified_upstream_files": [
+          "sha256-simd/go.mod",
+          "sha256-simd/README.md"
+        ]
+      },
+      "upstream_patches": [],
+      "updates": []
+    },
+    {
+      "name": "simdjson-go",
+      "directory": "simdjson-go",
+      "module": "github.com/soulteary/otterio-kits/simdjson-go",
+      "upstream": {
+        "repository": "https://github.com/minio/simdjson-go.git",
+        "default_branch": "master",
+        "tag": "v0.4.5",
+        "commit": "d82c779820b28b701fc258ee32f5df4ffc368f2d",
+        "tree": "c36f1a1d4369c0a10930a452aaa618cb90e52ed5",
+        "history_ref": "refs/tags/upstream/simdjson-go/v0.4.5",
+        "commit_count": 451
+      },
+      "import": {
+        "commit": "c55169ea6c677816e320faeaa435c6a9b795eeef"
+      },
+      "licenses": [
+        "LICENSE",
+        "LICENSE.Golang"
+      ],
+      "local_changes": {
+        "scope": "Module identity, self-imports, install examples and license/maintenance notices; benchmark-only metadata aligned with parent module requirements. Runtime module dependencies and algorithms unchanged.",
+        "modified_upstream_files": [
+          "simdjson-go/go.mod",
+          "simdjson-go/examples/simdjson_example.go",
+          "simdjson-go/benchmarks/go.mod",
+          "simdjson-go/benchmarks/benchmarks_test.go",
+          "simdjson-go/examples/openrtb/openrtb_request.go",
+          "simdjson-go/README.md",
+          "simdjson-go/benchmarks/go.sum"
+        ],
+        "auxiliary_dependency_alignment": {
+          "compress": "v1.14.2 -> v1.15.15",
+          "cpuid/v2": "v2.0.9 -> v2.2.3",
+          "x/sys": "v0.0.0-20220704084225-05e143d24a9e (indirect)",
+          "reason": "go mod tidy -go=1.17 for the local parent replacement; versions already selected by the parent module"
+        }
+      },
+      "upstream_patches": [],
+      "updates": []
+    },
+    {
+      "name": "sio",
+      "directory": "sio",
+      "module": "github.com/soulteary/otterio-kits/sio",
+      "upstream": {
+        "repository": "https://github.com/minio/sio.git",
+        "default_branch": "master",
+        "tag": "v0.5.1",
+        "commit": "e1fddaac73108d378e89df17f4c3e2b53e5122c8",
+        "tree": "ef9327294acfeb2d30b2d33664de886fa09b5b5f",
+        "history_ref": "refs/tags/upstream/sio/v0.5.1",
+        "commit_count": 44
+      },
+      "import": {
+        "commit": "f59beba80d0adab7f6e83074c4e107e8aa328355"
+      },
+      "licenses": [
+        "LICENSE"
+      ],
+      "local_changes": {
+        "scope": "Module identity, self-imports, install examples and license/maintenance notices only; algorithms unchanged.",
+        "modified_upstream_files": [
+          "sio/go.mod",
+          "sio/sio.go",
+          "sio/cmd/ncrypt/main.go",
+          "sio/README.md"
+        ]
+      },
+      "upstream_patches": [],
+      "updates": []
+    },
+    {
+      "name": "crc64nvme",
+      "directory": "crc64nvme",
+      "module": "github.com/soulteary/otterio-kits/crc64nvme",
+      "upstream": {
+        "repository": "https://github.com/minio/crc64nvme.git",
+        "default_branch": "main",
+        "tag": "v1.1.1",
+        "commit": "cc422c7b1355e33091486ab1e6d461aba6fcaf69",
+        "tree": "29d16a9ad066d522052b9bb0d643966a15752e88",
+        "history_ref": "refs/tags/upstream/crc64nvme/v1.1.1",
+        "commit_count": 20
+      },
+      "import": {
+        "commit": "e6616cbb3a6c4cbc20709fcb38c598e943888d6a"
+      },
+      "licenses": [
+        "LICENSE"
+      ],
+      "local_changes": {
+        "scope": "Module identity, self-imports, install examples and license/maintenance notices only; algorithms unchanged.",
+        "modified_upstream_files": [
+          "crc64nvme/go.mod",
+          "crc64nvme/README.md"
+        ]
+      },
+      "upstream_patches": [],
+      "updates": []
+    },
+    {
+      "name": "md5-simd",
+      "directory": "md5-simd",
+      "module": "github.com/soulteary/otterio-kits/md5-simd",
+      "upstream": {
+        "repository": "https://github.com/minio/md5-simd.git",
+        "default_branch": "master",
+        "tag": "v1.1.2",
+        "commit": "776275e0c9a74ceebbd50fe5c1d61b0c80c608df",
+        "tree": "58fdf1ddbbf4041ba7f0856d4885625d16b2dec9",
+        "history_ref": "refs/tags/upstream/md5-simd/v1.1.2",
+        "commit_count": 115
+      },
+      "import": {
+        "commit": "0d5cd410f1c037d85999fa73aae99cb2f3e15f7e"
+      },
+      "licenses": [
+        "LICENSE",
+        "LICENSE.Golang",
+        "LICENSE.Igneous"
+      ],
+      "local_changes": {
+        "scope": "Module identity, self-imports, install examples and license/maintenance notices only; algorithms unchanged.",
+        "modified_upstream_files": [
+          "md5-simd/go.mod",
+          "md5-simd/_gen/go.mod",
+          "md5-simd/README.md"
+        ]
+      },
+      "upstream_patches": [],
+      "updates": []
+    }
+  ],
+  "auxiliary_modules": [
+    {
+      "directory": "md5-simd/_gen",
+      "purpose": "Upstream assembly generator, not an independently released runtime module."
+    },
+    {
+      "directory": "simdjson-go/benchmarks",
+      "purpose": "Upstream comparison benchmarks; local replace points to its parent module."
+    }
+  ]
+}

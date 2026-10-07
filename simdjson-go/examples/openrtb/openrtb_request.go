@@ -1,8 +1,10 @@
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+
 package main
 
 import (
 	"fmt"
-	"github.com/minio/simdjson-go"
+	"github.com/soulteary/otterio-kits/simdjson-go"
 	"os"
 	"sync"
 )

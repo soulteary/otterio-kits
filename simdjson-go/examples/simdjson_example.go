@@ -1,6 +1,8 @@
 //go:build ignore
 // +build ignore
 
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+
 package main
 
 import (
@@ -9,7 +11,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/minio/simdjson-go"
+	"github.com/soulteary/otterio-kits/simdjson-go"
 )
 
 func printKeyHistogram(pj *simdjson.ParsedJson, key string) (err error) {

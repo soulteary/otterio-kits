@@ -1,4 +1,5 @@
-module github.com/minio/simdjson-go
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+module github.com/soulteary/otterio-kits/simdjson-go
 
 go 1.18
 

@@ -1,4 +1,5 @@
-module github.com/minio/crc64nvme
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+module github.com/soulteary/otterio-kits/crc64nvme
 
 go 1.22
 

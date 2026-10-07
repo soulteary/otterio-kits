@@ -1,0 +1,86 @@
+name: Modules
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modules-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: local
+  GOWORK: off
+
+jobs:
+  modules:
+    name: Go ${{ matrix.go }} on ${{ matrix.os }}/${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Product toolchain: exercise x86 SIMD, portable paths and race checks.
+          - os: ubuntu-24.04
+            arch: amd64
+            go: '1.27.1'
+            extended: true
+          # Real ARM execution for hashes/encryption. simdjson-go has no ARM
+          # parser; its upstream tests skip parser cases on this platform.
+          - os: macos-15
+            arch: arm64
+            go: '1.27.1'
+            extended: false
+          # sio is the highest minimum (Go 1.24.0). Check that minor series
+          # without silently upgrading through the toolchain download mechanism.
+          - os: ubuntu-24.04
+            arch: amd64
+            go: '1.24.x'
+            extended: false
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache-dependency-path: |
+            */go.mod
+            */go.sum
+      - name: Confirm native runner architecture
+        shell: bash
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+        run: |
+          go version
+          test "$(go env GOHOSTARCH)" = "$EXPECTED_ARCH"
+      - name: Verify retained upstream histories and original import trees
+        if: matrix.extended
+        run: python3 scripts/verify-upstreams.py
+      - name: Verify six release modules and two auxiliary modules independently
+        run: bash scripts/check-modules.sh verify
+      - name: Compile and test auxiliary generator and benchmark modules
+        if: matrix.extended
+        run: bash scripts/check-modules.sh tools
+      - name: Run native upstream tests
+        env:
+          REQUIRE_SIMDJSON_CPU: ${{ matrix.arch == 'amd64' && '1' || '0' }}
+        run: bash scripts/check-modules.sh test
+      - name: Test portable implementations
+        if: matrix.extended
+        run: bash scripts/check-modules.sh noasm
+      - name: Run race detector
+        if: matrix.extended
+        env:
+          REQUIRE_SIMDJSON_CPU: '1'
+        run: bash scripts/check-modules.sh race
+      - name: Cross-compile Linux ARM64 packages and test binaries
+        if: matrix.extended
+        run: bash scripts/check-modules.sh cross

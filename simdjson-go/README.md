@@ -1,3 +1,5 @@
+> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/simdjson-go`, based on MinIO `simdjson-go` `v0.4.5`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
+
 # simdjson-go
 
 ## Introduction
@@ -43,7 +45,7 @@ Using the `gccgo` will also always return unsupported CPU since it cannot compil
 Run the following command in order to install `simdjson-go`
 
 ```bash
-go get -u github.com/minio/simdjson-go
+go get -u github.com/soulteary/otterio-kits/simdjson-go
 ```
 
 In order to parse a JSON byte stream, you either call [`simdjson.Parse()`](https://pkg.go.dev/github.com/minio/simdjson-go?tab=doc#Parse)

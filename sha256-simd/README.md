@@ -1,3 +1,5 @@
+> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/sha256-simd`, based on MinIO `sha256-simd` `v1.0.1`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
+
 # sha256-simd
 
 Accelerate SHA256 computations in pure Go using AVX512, SHA Extensions for x86 and ARM64 for ARM. 
@@ -45,7 +47,7 @@ Whereas the original Intel C implementation requires some sort of explicit sched
 Due to this different way of scheduling, we decided to use an explicit method to instantiate the AVX512 version. Essentially one or more AVX512 processing servers ([`Avx512Server`](https://github.com/minio/sha256-simd/blob/master/sha256blockAvx512_amd64.go#L294)) have to be created whereby each server can hash over 3 GB/s on a single core. An `hash.Hash` object ([`Avx512Digest`](https://github.com/minio/sha256-simd/blob/master/sha256blockAvx512_amd64.go#L45)) is then instantiated using one of these servers and used in the regular fashion:
 
 ```go
-import "github.com/minio/sha256-simd"
+import "github.com/soulteary/otterio-kits/sha256-simd"
 
 func main() {
 	server := sha256.NewAvx512Server()
@@ -68,7 +70,7 @@ The following code snippet shows how you can use `github.com/minio/sha256-simd`.
 This will automatically select the fastest method for the architecture on which it will be executed.
 
 ```go
-import "github.com/minio/sha256-simd"
+import "github.com/soulteary/otterio-kits/sha256-simd"
 
 func main() {
         ...

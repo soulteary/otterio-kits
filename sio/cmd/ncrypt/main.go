@@ -29,7 +29,9 @@
 // Encrypt file 'myfile.txt':                  ncrypt ~/myfile.txt ~/myfile.txt.enc
 // Decrypt 'myfile.txt.enc' and print content: ncrypt -d ~/myfile.txt
 // Encrypt file 'myfile.txt' using unix pipes: cat ~/myfile.txt | ncrypt > ~/myfile.txt.enc
-package main // import "github.com/minio/sio/cmd/ncrypt"
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+
+package main // import "github.com/soulteary/otterio-kits/sio/cmd/ncrypt"
 
 import (
 	"crypto/rand"
@@ -42,7 +44,7 @@ import (
 	"sort"
 	"syscall"
 
-	"github.com/minio/sio"
+	"github.com/soulteary/otterio-kits/sio"
 	"golang.org/x/crypto/scrypt"
 	"golang.org/x/term"
 )

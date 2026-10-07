@@ -1,0 +1,40 @@
+otterio-kits
+
+This repository maintains modified and unmodified software originally
+published in the following MinIO repositories:
+
+  github.com/minio/highwayhash   v1.0.4
+  github.com/minio/sha256-simd   v1.0.1
+  github.com/minio/simdjson-go   v0.4.5
+  github.com/minio/sio           v0.5.1
+  github.com/minio/crc64nvme     v1.1.1
+  github.com/minio/md5-simd      v1.1.2
+
+The original Minio Inc. / MinIO Inc. copyright notices, source attribution
+and Apache License, Version 2.0 terms remain in the individual modules.
+Additional notices applicable to individual source files include:
+
+  Copyright (c) 2009 The Go Authors. All rights reserved.
+  Copyright 2009 The Go Authors. All rights reserved.
+    sha256-simd/sha256_test.go
+    simdjson-go/appendfloat_f.go
+    simdjson-go/ftoaryu.go
+    md5-simd/LICENSE.Golang
+    See the corresponding module's LICENSE.Golang for BSD-3-Clause terms.
+
+  Kristofer Peterson, (C) 2018.
+    sha256-simd/sha256block_amd64.s; Apache License, Version 2.0.
+
+  Copyright (c) 2018 Igneous Systems
+    md5-simd/block8_amd64.s; see md5-simd/LICENSE.Igneous for MIT terms.
+
+The sha256-simd upstream also acknowledges Intel intel-ipsec-mb and
+jocover/sha256-armv8 as implementation sources. Those source attribution
+statements are retained in the imported documentation and source files.
+
+This file provides attribution and does not replace the individual
+module license files or source notices. See docs/LICENSES.md for the
+fixed import baselines, license locations and review scope.
+
+otterio-kits is independently maintained. The upstream project names are
+used to identify the original software sources.

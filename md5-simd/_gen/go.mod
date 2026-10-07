@@ -1,4 +1,5 @@
-module github.com/minio/md5-simd/_gen
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+module github.com/soulteary/otterio-kits/md5-simd/_gen
 
 go 1.14
 
