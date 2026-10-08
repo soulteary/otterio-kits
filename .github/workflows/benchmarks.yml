@@ -1,0 +1,82 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_ref:
+        description: 'Compare this revision with a baseline on the same runner (empty disables comparison)'
+        required: false
+        default: main
+        type: string
+  pull_request:
+    paths:
+      - .github/workflows/benchmarks.yml
+      - scripts/check-reports.sh
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmarks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: local
+  GOWORK: off
+
+jobs:
+  benchmark:
+    name: ${{ matrix.module }} / benchmark report
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [highwayhash, sha256-simd, simdjson-go, sio, crc64nvme, md5-simd]
+    env:
+      MODULE: ${{ matrix.module }}
+      # PRs validate workload selectors with one iteration; manual runs measure.
+      BENCHTIME: ${{ github.event_name == 'pull_request' && '1x' || '200ms' }}
+      BENCH_COUNT: ${{ github.event_name == 'pull_request' && '1' || '10' }}
+      BASELINE_REF: ${{ inputs.baseline_ref }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Check out baseline without changing measured head
+        if: github.event_name == 'workflow_dispatch' && env.BASELINE_REF != ''
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ env.BASELINE_REF }}
+          path: .benchmark-baseline
+          persist-credentials: false
+      - name: Benchmark baseline with identical selectors and compiler
+        if: github.event_name == 'workflow_dispatch' && env.BASELINE_REF != ''
+        run: bash scripts/check-reports.sh benchmark "$MODULE" "reports/benchmarks/$MODULE/base" "$GITHUB_WORKSPACE/.benchmark-baseline"
+      - name: Benchmark head
+        run: bash scripts/check-reports.sh benchmark "$MODULE" "reports/benchmarks/$MODULE/head"
+      - name: Compare same-runner measurements with pinned benchstat
+        if: github.event_name == 'workflow_dispatch' && env.BASELINE_REF != ''
+        run: |
+          export GOBIN="$RUNNER_TEMP/otterio-report-tools"
+          bash scripts/install-ci-tool.sh benchstat
+          "$GOBIN/benchstat" "reports/benchmarks/$MODULE/base/benchmarks.txt" "reports/benchmarks/$MODULE/head/benchmarks.txt" | tee "reports/benchmarks/$MODULE/comparison.txt"
+          {
+            printf '### %s benchmark comparison\n\n```text\n' "$MODULE"
+            cat "reports/benchmarks/$MODULE/comparison.txt"
+            printf '```\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve module measurements and hardware metadata
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: benchmarks-${{ matrix.module }}
+          path: reports/benchmarks/${{ matrix.module }}/
+          if-no-files-found: error
+          retention-days: 14
