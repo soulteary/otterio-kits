@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Modified by otterIO contributors in 2026: retain convertible unsigned array values.
 package simdjson
 
 import (
@@ -221,7 +222,7 @@ readArray:
 				return nil, errors.New("unsigned integer value overflows int64")
 			}
 
-			dst = append(dst)
+			dst = append(dst, int64(val))
 		case TagArrayEnd:
 			break readArray
 		default:

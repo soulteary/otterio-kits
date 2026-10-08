@@ -1,0 +1,36 @@
+{
+  "actions": {
+    "actions/checkout": "v7.0.1",
+    "actions/setup-go": "v7.0.0",
+    "actions/upload-artifact": "v7.0.2",
+    "codecov/codecov-action": "v7.1.1",
+    "github/codeql-action/init": "v4.38.2",
+    "github/codeql-action/analyze": "v4.38.2",
+    "github/codeql-action/upload-sarif": "v4.38.2",
+    "aquasecurity/trivy-action": "a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8"
+  },
+  "go_tools": {
+    "actionlint": {
+      "package": "github.com/rhysd/actionlint/cmd/actionlint",
+      "version": "v1.7.12"
+    },
+    "govulncheck": {
+      "package": "golang.org/x/vuln/cmd/govulncheck",
+      "version": "v1.8.0"
+    },
+    "golangci-lint": {
+      "package": "github.com/golangci/golangci-lint/v2/cmd/golangci-lint",
+      "version": "v2.14.0"
+    },
+    "benchstat": {
+      "package": "golang.org/x/perf/cmd/benchstat",
+      "version": "v0.0.0-20260929162123-406019bb8b68"
+    }
+  },
+  "cli_versions": {
+    "trivy": "v0.75.0"
+  },
+  "release_notes": {
+    "aquasecurity/trivy-action": "v0.36.0; pinned to the full release commit"
+  }
+}
