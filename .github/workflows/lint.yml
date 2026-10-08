@@ -42,11 +42,9 @@ jobs:
             **/go.mod
             **/go.sum
       - name: Install pinned golangci-lint
-        env:
-          GOBIN: ${{ runner.temp }}/otterio-ci-bin
-        run: |
-          bash scripts/install-ci-tool.sh golangci-lint
-          echo "$GOBIN" >> "$GITHUB_PATH"
+        uses: ./.github/actions/setup-ci-tool
+        with:
+          tool: golangci-lint
       - name: Check module policy
         env:
           MODULE: ${{ matrix.module }}

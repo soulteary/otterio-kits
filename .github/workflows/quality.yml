@@ -54,11 +54,14 @@ jobs:
           cache-dependency-path: |
             **/go.mod
             **/go.sum
+      - name: Install pinned actionlint
+        if: always()
+        uses: ./.github/actions/setup-ci-tool
+        with:
+          tool: actionlint
       - name: Validate workflow syntax and shell commands
         if: always()
-        run: |
-          GOBIN="$RUNNER_TEMP/otterio-ci-bin" bash scripts/install-ci-tool.sh actionlint
-          "$RUNNER_TEMP/otterio-ci-bin/actionlint" -color
+        run: actionlint -color
   modules:
     needs: changes
     if: ${{ needs.changes.outputs.quality != '[]' }}
