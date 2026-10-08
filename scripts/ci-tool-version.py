@@ -17,5 +17,7 @@ if args.tool in manifest["go_tools"]:
     print(manifest["go_tools"][args.tool][args.field])
 elif args.field == "version" and args.tool in manifest["cli_versions"]:
     print(manifest["cli_versions"][args.tool])
+elif args.field == "version" and args.tool in manifest.get("python_tools", {}):
+    print(manifest["python_tools"][args.tool])
 else:
     parser.error(f"Unknown tool or field: {args.tool}/{args.field}")

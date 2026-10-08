@@ -12,7 +12,10 @@ Linux AMD64 的完整 vet 随后发现旧生成汇编把 BP 当作普通寄存�
 python3 scripts/check-quality.py format md5-simd
 python3 scripts/check-quality.py vet sha256-simd
 python3 scripts/check-quality.py tidy simdjson-go/benchmarks
-python3 scripts/verify-ci-config.py
+python3 -m venv /tmp/otterio-ci-python
+/tmp/otterio-ci-python/bin/python -m pip install "PyYAML==$(python3 scripts/ci-tool-version.py PyYAML)"
+/tmp/otterio-ci-python/bin/python scripts/verify-ci-config.py
+/tmp/otterio-ci-python/bin/python -m unittest discover -s scripts/tests -p 'test_*.py'
 GOBIN=/tmp/otterio-ci-bin bash scripts/install-ci-tool.sh actionlint
 /tmp/otterio-ci-bin/actionlint
 ```
@@ -20,3 +23,5 @@ GOBIN=/tmp/otterio-ci-bin bash scripts/install-ci-tool.sh actionlint
 `.github/ci-tools.json` 是 Actions、govulncheck、golangci-lint、actionlint、benchstat 和 Trivy 的固定版本清单。Go 产品版本仍以 `go.work` 为准。Actions 的 `uses` 需要写字面量版本；`verify-ci-config.py` 校验它们与清单一致，并要求所有 CodeQL 步骤统一版本。工具安装器在模块之外安装固定 Go 工具版本，不向发行模块增加 CI 工具依赖。
 
 更新工具时同时更新清单和 workflow 字面量，运行 actionlint 和版本检查。actionlint 本身固定版本；使用其内置 shellcheck 集成（Linux runner 自带 shellcheck），检查表达式、任务依赖、矩阵、Actions 参数和 shell 命令。
+
+版本校验使用固定 PyYAML 的 SafeLoader 解析 YAML 节点，检查 workflow 的实际 job/step `uses` 和 composite action 的步骤。支持 `uses :`、引号键、flow mapping、折叠 scalar 和锚点/别名，不依赖文本行形状，也不会把 `run` 或环境变量中的字符串当成 action。Go/CLI 必须使用完整版本，拒绝 `v1`、`v1.2` 等浮动查询；Python 解析器版本也纳入公共清单和检查。

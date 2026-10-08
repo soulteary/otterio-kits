@@ -32,9 +32,18 @@ jobs:
       - name: Verify original upstream commits and import trees
         if: always()
         run: python3 scripts/verify-upstreams.py
-      - name: Verify centralized Actions versions
+      - name: Install pinned YAML parser in an isolated environment
+        id: python
         if: always()
-        run: python3 scripts/verify-ci-config.py
+        run: |
+          python3 -m venv "$RUNNER_TEMP/otterio-ci-python"
+          "$RUNNER_TEMP/otterio-ci-python/bin/python" -m pip install --disable-pip-version-check "PyYAML==$(python3 scripts/ci-tool-version.py PyYAML)"
+      - name: Regression-test CI policy parsing
+        if: ${{ !cancelled() && steps.python.outcome == 'success' }}
+        run: '"$RUNNER_TEMP/otterio-ci-python/bin/python" -m unittest discover -s scripts/tests -p "test_*.py" -v'
+      - name: Verify centralized Actions versions from parsed YAML
+        if: ${{ !cancelled() && steps.python.outcome == 'success' }}
+        run: '"$RUNNER_TEMP/otterio-ci-python/bin/python" scripts/verify-ci-config.py'
       - uses: actions/setup-go@v7.0.0
         if: always()
         with:
