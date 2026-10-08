@@ -2,11 +2,6 @@ name: Extended platforms
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/extended.yml'
-      - 'scripts/check-modules.sh'
-      - 'go.work'
-      - 'docs/CI_TESTS.md'
   workflow_dispatch:
   schedule:
     - cron: '13 4 * * 0'
@@ -26,26 +21,19 @@ env:
   CGO_ENABLED: '0'
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   platforms:
+    needs: changes
+    if: ${{ needs.changes.outputs.extended != '[]' }}
     name: ${{ matrix.module }} / ${{ matrix.entry }}
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - module: sha256-simd
-            entry: all Go targets and upstream build tags
-            mode: architectures
-            arch: amd64
-          - module: simdjson-go
-            entry: Linux 386 short tests
-            mode: short
-            arch: '386'
-          - module: crc64nvme
-            entry: Linux 386 short tests
-            mode: short
-            arch: '386'
+        include: ${{ fromJSON(needs.changes.outputs.extended) }}
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -67,3 +55,18 @@ jobs:
           go version
           test "$(go env GOHOSTARCH)" = "$EXPECTED_ARCH"
           bash scripts/check-modules.sh "$MODE" "$MODULE"
+
+  gate:
+    name: Extended platforms gate
+    if: ${{ always() }}
+    needs: [changes, platforms]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require selection and selected checks to succeed
+        env:
+          CI_NEEDS_JSON: ${{ toJSON(needs) }}
+        run: python3 scripts/check-ci-gate.py --job platforms:extended

@@ -1,0 +1,47 @@
+name: Select CI modules
+
+on:
+  workflow_call:
+    outputs:
+      quality:
+        description: Release and auxiliary modules requiring quality checks
+        value: ${{ jobs.changes.outputs.quality }}
+      runtime:
+        description: Release modules requiring runtime checks
+        value: ${{ jobs.changes.outputs.runtime }}
+      auxiliary:
+        description: Auxiliary module matrix entries
+        value: ${{ jobs.changes.outputs.auxiliary }}
+      extended:
+        description: Extended platform matrix entries
+        value: ${{ jobs.changes.outputs.extended }}
+      fuzz:
+        description: Fuzz target matrix entries
+        value: ${{ jobs.changes.outputs.fuzz }}
+      trivy:
+        description: Modules requiring the preserved Trivy scan
+        value: ${{ jobs.changes.outputs.trivy }}
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: Detect affected modules
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      quality: ${{ steps.select.outputs.quality }}
+      runtime: ${{ steps.select.outputs.runtime }}
+      auxiliary: ${{ steps.select.outputs.auxiliary }}
+      extended: ${{ steps.select.outputs.extended }}
+      fuzz: ${{ steps.select.outputs.fuzz }}
+      trivy: ${{ steps.select.outputs.trivy }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select matrices from the complete event diff
+        id: select
+        run: python3 scripts/select-ci.py
