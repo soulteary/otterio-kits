@@ -18,6 +18,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+
   repository:
     name: Repository policy and upstream history
     runs-on: ubuntu-24.04
@@ -57,21 +60,15 @@ jobs:
           GOBIN="$RUNNER_TEMP/otterio-ci-bin" bash scripts/install-ci-tool.sh actionlint
           "$RUNNER_TEMP/otterio-ci-bin/actionlint" -color
   modules:
+    needs: changes
+    if: ${{ needs.changes.outputs.quality != '[]' }}
     name: Quality / ${{ matrix.module }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        module:
-          - highwayhash
-          - sha256-simd
-          - simdjson-go
-          - sio
-          - crc64nvme
-          - md5-simd
-          - md5-simd/_gen
-          - simdjson-go/benchmarks
+        module: ${{ fromJSON(needs.changes.outputs.quality) }}
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -101,3 +98,18 @@ jobs:
         env:
           MODULE: ${{ matrix.module }}
         run: python3 scripts/check-quality.py tidy "$MODULE"
+
+  gate:
+    name: Quality gate
+    if: ${{ always() }}
+    needs: [changes, repository, modules]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require selection and selected checks to succeed
+        env:
+          CI_NEEDS_JSON: ${{ toJSON(needs) }}
+        run: python3 scripts/check-ci-gate.py --job repository:always --job modules:quality
