@@ -30,6 +30,9 @@
   "cli_versions": {
     "trivy": "v0.75.0"
   },
+  "python_tools": {
+    "PyYAML": "6.0.3"
+  },
   "release_notes": {
     "aquasecurity/trivy-action": "v0.36.0; pinned to the full release commit"
   }

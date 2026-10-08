@@ -1,0 +1,11 @@
+# Vet baseline for modules without an imported lint policy.
+# highwayhash and sio keep their own policies, selected by check-lint.sh.
+# Assembly symbol references and retained upstream helper functions make unused
+# a separate policy decision for the SIMD modules; no existing rule is removed.
+version: "2"
+linters:
+  default: none
+  enable:
+    - govet
+  exclusions:
+    generated: strict

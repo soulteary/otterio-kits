@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
+// Updated by otterio-kits maintainers on 2026-10-08: attach the package documentation to the package declaration.
+
 // Package sio implements the DARE format. It provides an API for secure
 // en/decrypting IO operations using io.Reader and io.Writer.
-// Modified by otterio-kits maintainers on 2026-10-08: updated module paths.
-
 package sio // import "github.com/soulteary/otterio-kits/sio"
 
 import (

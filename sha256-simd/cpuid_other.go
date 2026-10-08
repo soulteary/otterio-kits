@@ -1,3 +1,4 @@
+// Updated by otterio-kits maintainers on 2026-10-08: use os.ReadFile for the Go 1.27 inline vet check.
 // Minio Cloud Storage, (C) 2021 Minio, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +21,7 @@ package sha256
 
 import (
 	"bytes"
-	"io/ioutil"
+	"os"
 	"runtime"
 
 	"github.com/klauspost/cpuid/v2"
@@ -48,7 +49,7 @@ func hasArmSha2() bool {
 	// Feature to check for.
 	const sha256Feature = "sha2"
 
-	cpuInfo, err := ioutil.ReadFile(procCPUInfo)
+	cpuInfo, err := os.ReadFile(procCPUInfo)
 	if err != nil {
 		return false
 	}
