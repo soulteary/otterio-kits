@@ -86,14 +86,13 @@ git am --directory=highwayhash -3 /tmp/highwayhash-fix.patch
 
 发布前检查：该模块在 `GOWORK=off` 下通过、许可证与 NOTICE 随模块保留、适用平台完成运行、发行说明记录上游基线和本仓库改动。新模块路径的首次发行号独立决定，不把原 MinIO tag 称为 OtterIO 已发行版本。主版本升级遵循 Go 模块 `/v2` 等路径规则。
 
-本次仅作本地导入，没有推送、没有创建正式发行 tag。后续批准发布时，先推送主线；主线祖先中的原始提交会一并传输。来源 tag 如需在远端保存，逐个显式推送：
+仓库主线和模块 CI 已推送到 GitHub；正式发行按模块单独进行。先将候选变更通过 PR 合入主线，验证将要打 tag 的确切 SHA；详见 [逐模块发布步骤](RELEASING.md)。主线祖先中的原始提交随主线一起传输；来源 tag 如需在远端保存，逐个显式推送：
 
 ```sh
-git push origin main
 git push origin refs/tags/upstream/highwayhash/v1.0.4
 ```
 
-按清单对其他五个来源 tag 执行相同操作。正式发行 tag 另外创建并推送；不使用 `git push --tags` 混合所有来源与发布引用。远端可访问后，在仓库之外通过正式 tag 下载单模块，再次验证 import、Go 版本和许可包。
+按清单对其他五个来源 tag 执行相同操作。正式发行 tag 另外创建并精确推送；不使用 `git push --tags` 混合所有来源与发布引用。当前没有 tag 自动测试或发布入口，候选提交须先完成精确 SHA 的检查，再公开 tag。远端可访问后，在仓库之外通过正式 tag 下载单模块，再次验证 import、Go 版本和许可包。
 
 ## 参考
 

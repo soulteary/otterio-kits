@@ -41,6 +41,7 @@ bash scripts/check-modules.sh tools
 
 - [详细执行计划](docs/IMPLEMENTATION_PLAN.md)
 - [更新、历史检查和发布流程](docs/MAINTENANCE.md)
+- [逐模块发布步骤与首发候选](docs/RELEASING.md)
 - [本次验证记录](docs/VALIDATION.md)
 - [Go、依赖升级与 CI 修复记录](docs/UPGRADE.md)
 - [原 CI 检查迁移对应关系](docs/CI_MIGRATION.md)
