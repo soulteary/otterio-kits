@@ -1,3 +1,4 @@
+# Updated by otterio-kits maintainers on 2026-10-08: share pinned v2 tool and migrate gomodguard.
 version: "2"
 linters:
   default: none
@@ -5,7 +6,7 @@ linters:
     - durationcheck
     - errcheck
     - gocritic
-    - gomodguard
+    - gomodguard_v2
     - gosec
     - govet
     - ineffassign
