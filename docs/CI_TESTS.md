@@ -52,7 +52,8 @@ this entry-point documentation. It keeps
 SHA256's upstream `test-architectures.sh`: every target reported by the current
 `go tool dist list`, built with the original normal, `noasm`, `appengine`, and
 combined tag modes. It also retains native Linux 386 short tests for simdjson-go
-and crc64nvme by installing and running the 386 Go toolchain. The 386 simdjson-go
+and crc64nvme by installing and running the 386 Go toolchain with `CGO_ENABLED=0`,
+matching the original pure Go/assembly checks without requiring 32-bit C headers. The 386 simdjson-go
 job exercises unsupported-platform behavior, not an AVX2 parser. These longer or
 less common checks have explicit per-module job names and do not multiply every
 normal pull request's platform matrix.
