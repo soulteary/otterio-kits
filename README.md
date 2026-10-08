@@ -43,6 +43,10 @@ bash scripts/check-modules.sh tools
 - [更新、历史检查和发布流程](docs/MAINTENANCE.md)
 - [本次验证记录](docs/VALIDATION.md)
 - [Go、依赖升级与 CI 修复记录](docs/UPGRADE.md)
+- [原 CI 检查迁移对应关系](docs/CI_MIGRATION.md)
+- [格式、vet 与统一工具版本](docs/CI_QUALITY.md)
+- [逐模块测试、生成器与扩展平台](docs/CI_TESTS.md)
+- [覆盖率、fuzz 与性能比较](docs/CI_REPORTS.md)
 - [许可证与来源清单](docs/LICENSES.md)
 
 六模块主协议均为 Apache-2.0，另外保留适用的 Go Authors BSD 和 Igneous MIT 许可材料。各模块的 `LICENSE*`、`NOTICE` 与原源码署名随独立发行保留。

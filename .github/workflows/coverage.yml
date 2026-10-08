@@ -1,0 +1,63 @@
+name: Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: local
+  GOWORK: off
+
+jobs:
+  coverage:
+    name: ${{ matrix.module }} / race + atomic coverage
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [highwayhash, sha256-simd, simdjson-go, sio, crc64nvme, md5-simd]
+    env:
+      MODULE: ${{ matrix.module }}
+      HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Collect module coverage independently
+        run: bash scripts/check-reports.sh coverage "$MODULE" "reports/coverage/$MODULE"
+      - name: Preserve module profile and test log
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: coverage-${{ matrix.module }}
+          path: reports/coverage/${{ matrix.module }}/
+          if-no-files-found: error
+          retention-days: 14
+      # Preserve sio's optional upstream Codecov integration with module flags.
+      # Profiles remain available as artifacts even when no token is configured.
+      - name: Upload module coverage to Codecov
+        if: success() && env.HAS_CODECOV_TOKEN == 'true'
+        uses: codecov/codecov-action@v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: reports/coverage/${{ matrix.module }}/coverage.out
+          flags: ${{ matrix.module }}
+          name: ${{ matrix.module }}
+          disable_search: true
+          fail_ci_if_error: false

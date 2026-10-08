@@ -3,3 +3,6 @@
 # Local cross-compiled test binaries and common editor files.
 *.test
 .DS_Store
+# Local outputs from the optional per-module report workflows.
+/reports/
+/.benchmark-baseline/

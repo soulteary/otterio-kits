@@ -1,0 +1,74 @@
+name: Fuzz
+
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/fuzz.yml
+      - scripts/check-reports.sh
+      - sio/**
+      - simdjson-go/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: local
+  GOWORK: off
+  FUZZTIME: 1m
+  FUZZ_PARALLEL: '2'
+
+jobs:
+  fuzz:
+    name: ${{ matrix.module }} / ${{ matrix.target }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: sio
+            target: FuzzEncryptDecrypt
+          - module: sio
+            target: FuzzDecryptMalformed
+          - module: sio
+            target: FuzzDecryptBuffer
+          - module: sio
+            target: FuzzReaderWriter
+          - module: sio
+            target: FuzzPackageBoundaries
+          - module: simdjson-go
+            target: FuzzParse
+          - module: simdjson-go
+            target: FuzzCorrect
+          - module: simdjson-go
+            target: FuzzSerialize
+    env:
+      MODULE: ${{ matrix.module }}
+      FUZZ_TARGET: ${{ matrix.target }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Run one exact fuzz target for a bounded duration
+        run: bash scripts/check-reports.sh fuzz "$MODULE" "$FUZZ_TARGET" "reports/fuzz/$MODULE/$FUZZ_TARGET"
+      - name: Preserve inputs, environment and failure log
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: fuzz-${{ matrix.module }}-${{ matrix.target }}
+          path: reports/fuzz/${{ matrix.module }}/${{ matrix.target }}/
+          if-no-files-found: error
+          retention-days: 14
