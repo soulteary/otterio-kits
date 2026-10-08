@@ -17,7 +17,12 @@
  * limitations under the License.
  */
 
+// Modified by otterio-kits maintainers on 2026-10-08:
+// expose assembly availability to CPU dispatch for this build.
+
 package sha256
+
+const assemblyAvailable = true
 
 func blockIntelShaGo(dig *digest, p []byte) {
 	panic("blockIntelShaGo called unexpectedly")

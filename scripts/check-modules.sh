@@ -79,7 +79,7 @@ require_file() {
 
 check_layout() {
   local expected_modules actual_modules expected_workspace actual_workspace
-  local module module_file module_dir workspace_path
+  local module module_file module_dir workspace_path workspace_go module_go
   expected_modules=$(printf '%s\n' "${release_modules[@]}" "${auxiliary_modules[@]}" | LC_ALL=C sort)
   actual_modules=$(
     find "$repo_dir" -type d \( -name .git -o -name .agents -o -name .codex \) -prune -o -type f -name go.mod -print |
@@ -94,6 +94,14 @@ check_layout() {
     exit 1
   fi
   require_file "$repo_dir/go.work"
+  workspace_go=$(go work edit -json "$repo_dir/go.work" | awk -F '"' '/"Go":/ {print $4}')
+  for module in "${release_modules[@]}" "${auxiliary_modules[@]}"; do
+    module_go=$(cd "$repo_dir/$module" && go mod edit -json | awk -F '"' '/"Go":/ {print $4}')
+    if [[ "$module_go" != "$workspace_go" ]]; then
+      echo "$module/go.mod uses Go $module_go; expected workspace version $workspace_go." >&2
+      exit 1
+    fi
+  done
   expected_workspace=$(
     for module in "${release_modules[@]}"; do
       (cd "$repo_dir/$module" && pwd)
@@ -127,7 +135,7 @@ check_layout() {
     esac
   done
   require_file "$repo_dir/md5-simd/LICENSE.Igneous"
-  echo "Layout verified: six release modules, two explicit auxiliary modules and per-module license materials."
+  echo "Layout verified: six release modules, two auxiliary modules, Go $workspace_go and per-module license materials."
 }
 
 check_layout

@@ -17,7 +17,12 @@
  * limitations under the License.
  */
 
+// Modified by otterio-kits maintainers on 2026-10-08:
+// disable assembly CPU dispatch when only portable implementations are built.
+
 package sha256
+
+const assemblyAvailable = false
 
 func blockIntelShaGo(dig *digest, p []byte) {
 	panic("blockIntelShaGo called unexpectedly")

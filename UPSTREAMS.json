@@ -28,7 +28,8 @@
         "modified_upstream_files": [
           "highwayhash/go.mod",
           "highwayhash/README.md"
-        ]
+        ],
+        "recorded_at_commit": "31f7ef570b3afcc750e85dcf0211885f89dfb4c8"
       },
       "upstream_patches": [],
       "updates": []
@@ -58,7 +59,8 @@
         "modified_upstream_files": [
           "sha256-simd/go.mod",
           "sha256-simd/README.md"
-        ]
+        ],
+        "recorded_at_commit": "31f7ef570b3afcc750e85dcf0211885f89dfb4c8"
       },
       "upstream_patches": [],
       "updates": []
@@ -99,7 +101,8 @@
           "cpuid/v2": "v2.0.9 -> v2.2.3",
           "x/sys": "v0.0.0-20220704084225-05e143d24a9e (indirect)",
           "reason": "go mod tidy -go=1.17 for the local parent replacement; versions already selected by the parent module"
-        }
+        },
+        "recorded_at_commit": "31f7ef570b3afcc750e85dcf0211885f89dfb4c8"
       },
       "upstream_patches": [],
       "updates": []
@@ -130,7 +133,8 @@
           "sio/sio.go",
           "sio/cmd/ncrypt/main.go",
           "sio/README.md"
-        ]
+        ],
+        "recorded_at_commit": "31f7ef570b3afcc750e85dcf0211885f89dfb4c8"
       },
       "upstream_patches": [],
       "updates": []
@@ -159,7 +163,8 @@
         "modified_upstream_files": [
           "crc64nvme/go.mod",
           "crc64nvme/README.md"
-        ]
+        ],
+        "recorded_at_commit": "31f7ef570b3afcc750e85dcf0211885f89dfb4c8"
       },
       "upstream_patches": [],
       "updates": []
@@ -191,7 +196,8 @@
           "md5-simd/go.mod",
           "md5-simd/_gen/go.mod",
           "md5-simd/README.md"
-        ]
+        ],
+        "recorded_at_commit": "31f7ef570b3afcc750e85dcf0211885f89dfb4c8"
       },
       "upstream_patches": [],
       "updates": []
@@ -205,6 +211,166 @@
     {
       "directory": "simdjson-go/benchmarks",
       "purpose": "Upstream comparison benchmarks; local replace points to its parent module."
+    }
+  ],
+  "maintenance_updates": [
+    {
+      "date": "2026-10-08",
+      "kind": "toolchain-dependencies-ci",
+      "go_version": "1.27.1",
+      "description": "Align all eight modules with otterio/oc, refresh declared external dependencies, remove the Go 1.24 CI matrix, and make NDJSON tests independent of external downloads. Guard SHA256 CPU dispatch by compiled backend availability for portable builds.",
+      "versions": {
+        "highwayhash": [
+          {
+            "Path": "golang.org/x/sys",
+            "Version": "v0.48.0",
+            "GoVersion": "1.26.0"
+          }
+        ],
+        "sha256-simd": [
+          {
+            "Path": "github.com/klauspost/cpuid/v2",
+            "Version": "v2.4.0",
+            "GoVersion": "1.24.0"
+          },
+          {
+            "Path": "golang.org/x/sys",
+            "Version": "v0.48.0",
+            "GoVersion": "1.26.0"
+          }
+        ],
+        "simdjson-go": [
+          {
+            "Path": "github.com/klauspost/compress",
+            "Version": "v1.20.1",
+            "GoVersion": "1.25"
+          },
+          {
+            "Path": "github.com/klauspost/cpuid/v2",
+            "Version": "v2.4.0",
+            "GoVersion": "1.24.0"
+          },
+          {
+            "Path": "golang.org/x/sys",
+            "Version": "v0.48.0",
+            "GoVersion": "1.26.0"
+          }
+        ],
+        "sio": [
+          {
+            "Path": "golang.org/x/crypto",
+            "Version": "v0.57.0",
+            "GoVersion": "1.26.0"
+          },
+          {
+            "Path": "golang.org/x/sys",
+            "Version": "v0.48.0",
+            "GoVersion": "1.26.0"
+          },
+          {
+            "Path": "golang.org/x/term",
+            "Version": "v0.46.0",
+            "GoVersion": "1.26.0"
+          }
+        ],
+        "crc64nvme": [
+          {
+            "Path": "github.com/klauspost/cpuid/v2",
+            "Version": "v2.4.0",
+            "GoVersion": "1.24.0"
+          },
+          {
+            "Path": "golang.org/x/sys",
+            "Version": "v0.48.0",
+            "GoVersion": "1.26.0"
+          }
+        ],
+        "md5-simd": [
+          {
+            "Path": "github.com/klauspost/cpuid/v2",
+            "Version": "v2.4.0",
+            "GoVersion": "1.24.0"
+          },
+          {
+            "Path": "golang.org/x/sys",
+            "Version": "v0.48.0",
+            "GoVersion": "1.26.0"
+          }
+        ],
+        "md5-simd/_gen": [
+          {
+            "Path": "github.com/mmcloughlin/avo",
+            "Version": "v0.6.0",
+            "GoVersion": "1.18"
+          },
+          {
+            "Path": "golang.org/x/mod",
+            "Version": "v0.41.0",
+            "GoVersion": "1.26.0"
+          },
+          {
+            "Path": "golang.org/x/sync",
+            "Version": "v0.23.0",
+            "GoVersion": "1.26.0"
+          },
+          {
+            "Path": "golang.org/x/tools",
+            "Version": "v0.51.0",
+            "GoVersion": "1.26.0"
+          }
+        ],
+        "simdjson-go/benchmarks": [
+          {
+            "Path": "github.com/buger/jsonparser",
+            "Version": "v1.6.1",
+            "GoVersion": "1.13"
+          },
+          {
+            "Path": "github.com/json-iterator/go",
+            "Version": "v1.1.12",
+            "GoVersion": "1.12"
+          },
+          {
+            "Path": "github.com/klauspost/compress",
+            "Version": "v1.20.1",
+            "GoVersion": "1.25"
+          },
+          {
+            "Path": "github.com/klauspost/cpuid/v2",
+            "Version": "v2.4.0",
+            "GoVersion": "1.24.0"
+          },
+          {
+            "Path": "github.com/modern-go/concurrent",
+            "Version": "v0.0.0-20180306012644-bacd9c7ef1dd"
+          },
+          {
+            "Path": "github.com/modern-go/reflect2",
+            "Version": "v1.0.2",
+            "GoVersion": "1.12"
+          },
+          {
+            "Path": "golang.org/x/sys",
+            "Version": "v0.48.0",
+            "GoVersion": "1.26.0"
+          }
+        ]
+      },
+      "dependency_audit": "All non-replaced requirements from each go.mod queried with go list -mod=readonly -m -u -json against proxy.golang.org; no Update found.",
+      "local_test_changes": [
+        "simdjson-go/ndjson_test.go",
+        "simdjson-go/parse_json_amd64_test.go",
+        "simdjson-go/parsed_serialize_test.go",
+        "sha256-simd/cpuid_portable_test.go"
+      ],
+      "ci_failure_source": "https://github.com/soulteary/otterio-kits/actions/runs/37703368849",
+      "record": "docs/UPGRADE.md",
+      "local_source_changes": [
+        "sha256-simd/cpuid_other.go",
+        "sha256-simd/sha256block_amd64.go",
+        "sha256-simd/sha256block_arm64.go",
+        "sha256-simd/sha256block_other.go"
+      ]
     }
   ]
 }

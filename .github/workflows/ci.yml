@@ -19,7 +19,7 @@ env:
 
 jobs:
   modules:
-    name: Go ${{ matrix.go }} on ${{ matrix.os }}/${{ matrix.arch }}
+    name: ${{ matrix.os }}/${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -29,19 +29,11 @@ jobs:
           # Product toolchain: exercise x86 SIMD, portable paths and race checks.
           - os: ubuntu-24.04
             arch: amd64
-            go: '1.27.1'
             extended: true
           # Real ARM execution for hashes/encryption. simdjson-go has no ARM
           # parser; its upstream tests skip parser cases on this platform.
           - os: macos-15
             arch: arm64
-            go: '1.27.1'
-            extended: false
-          # sio is the highest minimum (Go 1.24.0). Check that minor series
-          # without silently upgrading through the toolchain download mechanism.
-          - os: ubuntu-24.04
-            arch: amd64
-            go: '1.24.x'
             extended: false
     steps:
       - uses: actions/checkout@v7.0.1
@@ -50,10 +42,10 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
-          go-version: ${{ matrix.go }}
+          go-version-file: go.work
           cache-dependency-path: |
-            */go.mod
-            */go.sum
+            **/go.mod
+            **/go.sum
       - name: Confirm native runner architecture
         shell: bash
         env:
@@ -74,7 +66,6 @@ jobs:
           REQUIRE_SIMDJSON_CPU: ${{ matrix.arch == 'amd64' && '1' || '0' }}
         run: bash scripts/check-modules.sh test
       - name: Test portable implementations
-        if: matrix.extended
         run: bash scripts/check-modules.sh noasm
       - name: Run race detector
         if: matrix.extended

@@ -2,6 +2,8 @@
 
 日期：2026-10-08（Asia/Shanghai）。本机工具链 `go1.27.1 darwin/arm64`。
 
+本文保存初次维护提交 `31f7ef5` 的历史验收结果。后续工具链、依赖升级与 CI 修复见 [UPGRADE.md](UPGRADE.md)；当前要求以根 README、go.work 和 CI 为准。
+
 ## 已完成的维护基线
 
 六库以不带 `--squash` 的 `git subtree add` 导入；每个导入合并提交的第二父提交就是对应上游版本 SHA，导入时子目录树与上游原树完全一致。

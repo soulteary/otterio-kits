@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
+// Modified by otterio-kits maintainers on 2026-10-08:
+// use deterministic local NDJSON coverage and report fixture errors without downloads.
+
 package simdjson
 
 import (
+	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -254,7 +257,7 @@ func TestNdjsonCountWhere(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping... too long")
 	}
-	ndjson := loadFile("testdata/parking-citations.json.zst")
+	ndjson := loadFile(t, "testdata/parking-citations.json.zst")
 	pj, err := ParseND(ndjson, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -319,93 +322,121 @@ func TestNdjsonCountWhere2(t *testing.T) {
 	if !SupportedCPU() {
 		t.SkipNow()
 	}
-	if testing.Short() {
-		t.Skip("skipping... too long")
-	}
-	ndjson := loadFile("testdata/RC_2009-01.json.zst")
-	// Test trimming
-	b := make([]byte, 0, len(ndjson)+4)
-	b = append(b, '\n', '\n')
-	b = append(b, ndjson...)
-	b = append(b, '\n', '\n')
+	// Cover matching, missing, non-string and case-sensitive fields without
+	// relying on the external Reddit corpus. Blank lines also exercise
+	// the trimming that the original test constructed but did not parse.
+	ndjson := []byte("\n\n" + `{"subreddit":"reddit.com","author":"otter","score":3}
+{"subreddit":"golang","author":"otter","score":7}
+{"subreddit":"reddit.com","author":"soulteary","score":1}
+{"subreddit":"programming","author":"otter","score":0}
+{"subreddit":"golang","author":"soulteary","score":10}
+{"subreddit":"reddit.com","author":"otter","score":4}
+{"author":"otter","score":5}
+{"subreddit":null,"author":"soulteary","score":2}
+{"subreddit":123,"author":"otter","score":9}
+{"subreddit":"Golang","author":"otter","score":6}
+{"subreddit":"elsewhere","author":"guest","nested":{"subreddit":"reddit.com"}}
+{"subreddit":"","author":"guest"}` + "\n\n")
 	pj, err := ParseND(ndjson, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	const want = 170315
-	t.Run("countWhere", func(t *testing.T) {
-		if result := countWhere("subreddit", "reddit.com", *pj); result != want {
-			t.Errorf("TestNdjsonCountWhere: got: %d want: %d", result, want)
-		}
-
-	})
-	t.Run("foreach-findelement", func(t *testing.T) {
-		var result int
-		var elem *Element
-		err := pj.ForEach(func(i Iter) error {
-			var err error
-			elem, err = i.FindElement(elem, "subreddit")
-			if err != nil {
-				return nil
-			}
-			bts, _ := elem.Iter.StringBytes()
-			if string(bts) == "reddit.com" {
-				result++
-			}
-			return nil
+	for _, tc := range []struct {
+		name  string
+		key   string
+		value string
+		want  int
+	}{
+		{name: "reddit", key: "subreddit", value: "reddit.com", want: 3},
+		{name: "golang", key: "subreddit", value: "golang", want: 2},
+		{name: "case-sensitive", key: "subreddit", value: "Golang", want: 1},
+		{name: "empty-string", key: "subreddit", value: "", want: 1},
+		{name: "unmatched", key: "subreddit", value: "absent", want: 0},
+		{name: "other-key", key: "author", value: "otter", want: 7},
+		{name: "missing-key", key: "missing", value: "", want: 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Run("countWhere", func(t *testing.T) {
+				if result := countWhere(tc.key, tc.value, *pj); result != tc.want {
+					t.Errorf("got: %d want: %d", result, tc.want)
+				}
+			})
+			t.Run("foreach-findelement", func(t *testing.T) {
+				var result int
+				var elem *Element
+				err := pj.ForEach(func(i Iter) error {
+					var err error
+					elem, err = i.FindElement(elem, tc.key)
+					if err != nil || elem.Type != TypeString {
+						return nil
+					}
+					bts, err := elem.Iter.StringBytes()
+					if err != nil {
+						return err
+					}
+					if string(bts) == tc.value {
+						result++
+					}
+					return nil
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if result != tc.want {
+					t.Errorf("got: %d want: %d", result, tc.want)
+				}
+			})
 		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if result != want {
-			t.Errorf("TestNdjsonCountWhere: got: %d want: %d", result, want)
-		}
-	})
+	}
 }
 
-func loadFile(filename string) []byte {
+func loadFile(tb testing.TB, filename string) []byte {
+	tb.Helper()
+	data, err := readFixture(filename)
+	if err != nil {
+		tb.Fatalf("load local fixture: %v; prepare the fixture at %s before running this test or benchmark (no automatic download)", err, filename)
+	}
+	return data
+}
+
+func readFixture(filename string) ([]byte, error) {
 	if !strings.HasSuffix(filename, ".zst") {
-		ndjson, err := ioutil.ReadFile(filename)
+		data, err := os.ReadFile(filename)
 		if err != nil {
-			panic("Failed to load file")
+			return nil, fmt.Errorf("read fixture %q: %w", filename, err)
 		}
-		return ndjson
+		return data, nil
 	}
-	var f *os.File
-	var err error
-	for {
-		f, err = os.Open(filename)
-		if err == nil {
-			defer f.Close()
-			break
-		}
-		if os.IsNotExist(err) {
-			fmt.Println("downloading file", filename)
-			resp, err := http.DefaultClient.Get("https://dl.minio.io/assets/" + filepath.Base(filename))
-			if err == nil && resp.StatusCode == http.StatusOK {
-				b, err := ioutil.ReadAll(resp.Body)
-				if err == nil {
-					err = ioutil.WriteFile(filename, b, os.ModePerm)
-					if err == nil {
-						continue
-					}
-					panic("Failed to write file:" + err.Error())
-				}
-				panic("Failed to read file:" + err.Error())
-			}
-			panic("Failed to download file:" + err.Error())
-		}
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("open fixture %q: %w", filename, err)
 	}
+	defer f.Close()
 	dec, err := zstd.NewReader(f)
 	if err != nil {
-		panic("Failed to create decompressor")
+		return nil, fmt.Errorf("create decompressor for fixture %q: %w", filename, err)
 	}
 	defer dec.Close()
-	ndjson, err := ioutil.ReadAll(dec)
+	data, err := io.ReadAll(dec)
 	if err != nil {
-		panic("Failed to load file")
+		return nil, fmt.Errorf("decompress fixture %q: %w", filename, err)
 	}
-	return ndjson
+	return data, nil
+}
+
+func TestReadFixtureMissing(t *testing.T) {
+	for _, name := range []string{"missing.json", "missing.json.zst"} {
+		t.Run(name, func(t *testing.T) {
+			filename := filepath.Join(t.TempDir(), name)
+			data, err := readFixture(filename)
+			if !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("expected missing-file error, got data %q and error %v", data, err)
+			}
+			if !strings.Contains(err.Error(), filename) {
+				t.Fatalf("error does not identify the missing fixture: %v", err)
+			}
+		})
+	}
 }
 
 func count_raw_tape(tape []uint64) (count int) {
@@ -490,7 +521,7 @@ func BenchmarkNdjsonWarmCountStar(b *testing.B) {
 		b.SkipNow()
 	}
 
-	ndjson := loadFile("testdata/parking-citations-1M.json.zst")
+	ndjson := loadFile(b, "testdata/parking-citations-1M.json.zst")
 
 	pj, err := ParseND(ndjson, nil)
 	if err != nil {
@@ -510,7 +541,7 @@ func BenchmarkNdjsonWarmCountStarWithWhere(b *testing.B) {
 		b.SkipNow()
 	}
 
-	ndjson := loadFile("testdata/parking-citations-1M.json.zst")
+	ndjson := loadFile(b, "testdata/parking-citations-1M.json.zst")
 
 	pj, err := ParseND(ndjson, nil)
 	if err != nil {

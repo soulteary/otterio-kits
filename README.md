@@ -2,7 +2,7 @@
 
 为 otterIO 和 OC 统一维护基础 Go 组件的单仓多模块项目。六个库各自保留 `go.mod`、测试和许可证，独立发布；本仓库由 OtterIO 独立维护。
 
-当前为本地导入基线，尚未创建 OtterIO 发布 tag。`minio-go/v7` SDK 的 fork 单独维护，不放入本仓库。
+项目以固定上游版本导入并持续维护，尚未创建 OtterIO 发布 tag。`minio-go/v7` SDK 的 fork 单独维护，不放入本仓库。
 
 - `highwayhash`：带密钥的 HighwayHash，来源 `minio/highwayhash v1.0.4`。
 - `sha256-simd`：SHA-256 CPU 加速实现，来源 `minio/sha256-simd v1.0.1`。
@@ -15,7 +15,7 @@
 
 ## 开发和验证
 
-六个发行模块最低 Go 声明保持上游版本，整个工作区至少需要 Go 1.24.0；`sio` 原工具链提示为 Go 1.24.10。本仓库 CI 检查 Go 1.24 系列与产品工具链 Go 1.27.1。根 `go.work` 仅用于本地联合开发。
+六个发行模块、两个辅助模块和根工作区统一使用 **Go 1.27.1**，与 otterIO、OC 一致。CI 从 `go.work` 读取版本，运行 Linux amd64 和 macOS ARM64；检查脚本同时防止任一模块的 Go 声明偏离工作区。根 `go.work` 用于本地联合开发。
 
 ```sh
 python3 scripts/verify-upstreams.py
@@ -42,6 +42,7 @@ bash scripts/check-modules.sh tools
 - [详细执行计划](docs/IMPLEMENTATION_PLAN.md)
 - [更新、历史检查和发布流程](docs/MAINTENANCE.md)
 - [本次验证记录](docs/VALIDATION.md)
+- [Go、依赖升级与 CI 修复记录](docs/UPGRADE.md)
 - [许可证与来源清单](docs/LICENSES.md)
 
 六模块主协议均为 Apache-2.0，另外保留适用的 Go Authors BSD 和 Igneous MIT 许可材料。各模块的 `LICENSE*`、`NOTICE` 与原源码署名随独立发行保留。

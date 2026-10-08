@@ -13,6 +13,9 @@
 // limitations under the License.
 //
 
+// Modified by otterio-kits maintainers on 2026-10-08:
+// require a compiled assembly implementation before selecting CPU acceleration.
+
 package sha256
 
 import (
@@ -24,15 +27,18 @@ import (
 )
 
 var (
-	hasIntelSha = runtime.GOARCH == "amd64" && cpuid.CPU.Supports(cpuid.SHA, cpuid.SSSE3, cpuid.SSE4)
-	hasAvx512   = cpuid.CPU.Supports(cpuid.AVX512F, cpuid.AVX512DQ, cpuid.AVX512BW, cpuid.AVX512VL)
+	hasIntelSha = assemblyAvailable && runtime.GOARCH == "amd64" && cpuid.CPU.Supports(cpuid.SHA, cpuid.SSSE3, cpuid.SSE4)
+	hasAvx512   = assemblyAvailable && runtime.GOARCH == "amd64" && cpuid.CPU.Supports(cpuid.AVX512F, cpuid.AVX512DQ, cpuid.AVX512BW, cpuid.AVX512VL)
 )
 
 func hasArmSha2() bool {
+	if !assemblyAvailable || runtime.GOARCH != "arm64" {
+		return false
+	}
 	if cpuid.CPU.Has(cpuid.SHA2) {
 		return true
 	}
-	if runtime.GOARCH != "arm64" || runtime.GOOS != "linux" {
+	if runtime.GOOS != "linux" {
 		return false
 	}
 
