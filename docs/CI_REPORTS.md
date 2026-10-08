@@ -13,6 +13,13 @@ Profiles and human-readable totals are uploaded under `coverage-MODULE` and a
 module total is added to the run summary. Assembly instructions are not counted
 by Go's source coverage; a percentage describes instrumented Go statements.
 
+The complete simdjson-go fuzz corpus is replayed as part of this test run. Its
+race and atomic instrumentation took 9m49s on one hosted runner, leaving too
+little room under the original ten-minute test timeout. That module now has a
+20-minute test timeout and a 30-minute job timeout; other modules retain ten
+and 20 minutes. No tests or corpus entries are skipped. Verbose test logs show
+which test or seed was running if a future run exceeds its limit.
+
 The original Codecov upload is retained with separate module flags. Set the
 repository's `CODECOV_TOKEN` secret to enable it. Upload errors retain the
 upstream nonblocking behavior. The profiles do not depend on Codecov being

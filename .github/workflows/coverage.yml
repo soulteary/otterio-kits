@@ -21,11 +21,14 @@ jobs:
   coverage:
     name: ${{ matrix.module }} / race + atomic coverage
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: ${{ matrix.job_timeout || 20 }}
     strategy:
       fail-fast: false
       matrix:
         module: [highwayhash, sha256-simd, simdjson-go, sio, crc64nvme, md5-simd]
+        include:
+          - module: simdjson-go
+            job_timeout: 30
     env:
       MODULE: ${{ matrix.module }}
       HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
