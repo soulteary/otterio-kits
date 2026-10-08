@@ -98,7 +98,12 @@ case "$mode" in
   coverage)
     # Preserve sio's upstream Linux race + atomic coverage job and give every
     # runtime module a separate profile. Do not merge incompatible module paths.
-    go test -race -count=1 -timeout=10m -covermode=atomic \
+    # The parser replays its complete fuzz corpus here. A successful hosted run
+    # took 9m49s; leave room for runner variation without sampling the corpus.
+    coverage_timeout=10m
+    if [[ "$module" == simdjson-go ]]; then coverage_timeout=20m; fi
+    printf 'test-timeout: %s\n' "$coverage_timeout" >> "$output_dir/environment.txt"
+    go test -v -race -count=1 -timeout="$coverage_timeout" -covermode=atomic \
       -coverprofile="$output_dir/coverage.out" ./... 2>&1 | tee "$output_dir/tests.txt"
     go tool cover -func="$output_dir/coverage.out" | tee "$output_dir/coverage.txt"
     if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
