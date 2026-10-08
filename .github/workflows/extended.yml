@@ -1,0 +1,66 @@
+name: Extended platforms
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/extended.yml'
+      - 'scripts/check-modules.sh'
+      - 'go.work'
+      - 'docs/CI_TESTS.md'
+  workflow_dispatch:
+  schedule:
+    - cron: '13 4 * * 0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extended-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOTOOLCHAIN: local
+  GOWORK: off
+
+jobs:
+  platforms:
+    name: ${{ matrix.module }} / ${{ matrix.entry }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: sha256-simd
+            entry: all Go targets and upstream build tags
+            mode: architectures
+            arch: amd64
+          - module: simdjson-go
+            entry: Linux 386 short tests
+            mode: short
+            arch: '386'
+          - module: crc64nvme
+            entry: Linux 386 short tests
+            mode: short
+            arch: '386'
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.work
+          architecture: ${{ matrix.arch }}
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Run the upstream extended platform entry point
+        env:
+          MODULE: ${{ matrix.module }}
+          MODE: ${{ matrix.mode }}
+          EXPECTED_ARCH: ${{ matrix.arch }}
+          REQUIRE_SIMDJSON_CPU: '0'
+        run: |
+          go version
+          test "$(go env GOHOSTARCH)" = "$EXPECTED_ARCH"
+          bash scripts/check-modules.sh "$MODE" "$MODULE"

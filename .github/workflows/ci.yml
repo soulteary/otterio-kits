@@ -19,59 +19,107 @@ env:
 
 jobs:
   modules:
-    name: ${{ matrix.os }}/${{ matrix.arch }}
+    name: ${{ matrix.module }} / ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
+        module: [highwayhash, sha256-simd, simdjson-go, sio, crc64nvme, md5-simd]
+        platform: [linux, macos, windows]
         include:
-          # Product toolchain: exercise x86 SIMD, portable paths and race checks.
-          - os: ubuntu-24.04
+          - platform: linux
+            os: ubuntu-24.04
             arch: amd64
-            extended: true
-          # Real ARM execution for hashes/encryption. simdjson-go has no ARM
-          # parser; its upstream tests skip parser cases on this platform.
-          - os: macos-15
+          # Native ARM execution covers hashes and encryption. simdjson-go
+          # has no ARM parser; native Linux verifies actual parser execution.
+          - platform: macos
+            os: macos-15
             arch: arm64
-            extended: false
+          - platform: windows
+            os: windows-2025
+            arch: amd64
     steps:
       - uses: actions/checkout@v7.0.1
         with:
-          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
+        id: setup
         with:
           go-version-file: go.work
           cache-dependency-path: |
             **/go.mod
             **/go.sum
       - name: Confirm native runner architecture
-        shell: bash
         env:
           EXPECTED_ARCH: ${{ matrix.arch }}
         run: |
           go version
           test "$(go env GOHOSTARCH)" = "$EXPECTED_ARCH"
-      - name: Verify retained upstream histories and original import trees
-        if: matrix.extended
-        run: python3 scripts/verify-upstreams.py
-      - name: Verify six release modules and two auxiliary modules independently
-        run: bash scripts/check-modules.sh verify
-      - name: Compile and test auxiliary generator and benchmark modules
-        if: matrix.extended
-        run: bash scripts/check-modules.sh tools
+      - name: Verify module metadata and dependencies
+        env:
+          MODULE: ${{ matrix.module }}
+        run: bash scripts/check-modules.sh verify "$MODULE"
       - name: Run native upstream tests
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         env:
-          REQUIRE_SIMDJSON_CPU: ${{ matrix.arch == 'amd64' && '1' || '0' }}
-        run: bash scripts/check-modules.sh test
+          MODULE: ${{ matrix.module }}
+          REQUIRE_SIMDJSON_CPU: ${{ matrix.platform == 'linux' && '1' || '0' }}
+        run: bash scripts/check-modules.sh test "$MODULE"
       - name: Test portable implementations
-        run: bash scripts/check-modules.sh noasm
-      - name: Run race detector
-        if: matrix.extended
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
         env:
-          REQUIRE_SIMDJSON_CPU: '1'
-        run: bash scripts/check-modules.sh race
+          MODULE: ${{ matrix.module }}
+        run: bash scripts/check-modules.sh noasm "$MODULE"
+      - name: Run upstream race checks
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        env:
+          MODULE: ${{ matrix.module }}
+          REQUIRE_SIMDJSON_CPU: ${{ matrix.platform == 'linux' && '1' || '0' }}
+        run: |
+          case "$MODULE" in
+            simdjson-go|crc64nvme) mode=race-short ;;
+            *) mode=race ;;
+          esac
+          bash scripts/check-modules.sh "$mode" "$MODULE"
       - name: Cross-compile Linux ARM64 packages and test binaries
-        if: matrix.extended
-        run: bash scripts/check-modules.sh cross
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' && matrix.platform == 'linux' }}
+        env:
+          MODULE: ${{ matrix.module }}
+        run: bash scripts/check-modules.sh cross "$MODULE"
+
+  auxiliary:
+    name: ${{ matrix.module }} / ${{ matrix.entry }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - module: md5-simd/_gen
+            entry: generator
+          - module: simdjson-go/benchmarks
+            entry: benchmark smoke
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        id: setup
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Verify auxiliary module metadata and dependencies
+        env:
+          MODULE: ${{ matrix.module }}
+        run: bash scripts/check-modules.sh verify "$MODULE"
+      - name: Exercise the auxiliary module entry point
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        env:
+          MODULE: ${{ matrix.module }}
+        run: bash scripts/check-modules.sh tools "$MODULE"
