@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+env:
+  GOTOOLCHAIN: local
+  GOWORK: off
+
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,3 +32,72 @@ jobs:
       - name: Verify original upstream commits and import trees
         if: always()
         run: python3 scripts/verify-upstreams.py
+      - name: Install pinned YAML parser in an isolated environment
+        id: python
+        if: always()
+        run: |
+          python3 -m venv "$RUNNER_TEMP/otterio-ci-python"
+          "$RUNNER_TEMP/otterio-ci-python/bin/python" -m pip install --disable-pip-version-check "PyYAML==$(python3 scripts/ci-tool-version.py PyYAML)"
+      - name: Regression-test CI policy parsing
+        if: ${{ !cancelled() && steps.python.outcome == 'success' }}
+        run: '"$RUNNER_TEMP/otterio-ci-python/bin/python" -m unittest discover -s scripts/tests -p "test_*.py" -v'
+      - name: Verify centralized Actions versions from parsed YAML
+        if: ${{ !cancelled() && steps.python.outcome == 'success' }}
+        run: '"$RUNNER_TEMP/otterio-ci-python/bin/python" scripts/verify-ci-config.py'
+      - uses: actions/setup-go@v7.0.0
+        if: always()
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Validate workflow syntax and shell commands
+        if: always()
+        run: |
+          GOBIN="$RUNNER_TEMP/otterio-ci-bin" bash scripts/install-ci-tool.sh actionlint
+          "$RUNNER_TEMP/otterio-ci-bin/actionlint" -color
+  modules:
+    name: Quality / ${{ matrix.module }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - highwayhash
+          - sha256-simd
+          - simdjson-go
+          - sio
+          - crc64nvme
+          - md5-simd
+          - md5-simd/_gen
+          - simdjson-go/benchmarks
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Check format including generated Go files
+        env:
+          MODULE: ${{ matrix.module }}
+        run: python3 scripts/check-quality.py format "$MODULE"
+      - name: Run complete Go vet
+        if: always()
+        env:
+          MODULE: ${{ matrix.module }}
+        run: python3 scripts/check-quality.py vet "$MODULE"
+      - name: Verify module identity, graph and checksums
+        if: always()
+        env:
+          MODULE: ${{ matrix.module }}
+        run: bash scripts/check-modules.sh verify "$MODULE"
+      - name: Check tidy metadata without modifying module files
+        if: always()
+        env:
+          MODULE: ${{ matrix.module }}
+        run: python3 scripts/check-quality.py tidy "$MODULE"

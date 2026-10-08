@@ -15,7 +15,7 @@
 
 ## 开发和验证
 
-六个发行模块、两个辅助模块和根工作区统一使用 **Go 1.27.1**，与 otterIO、OC 一致。CI 从 `go.work` 读取版本，运行 Linux amd64 和 macOS ARM64；检查脚本同时防止任一模块的 Go 声明偏离工作区。根 `go.work` 用于本地联合开发。
+六个发行模块、两个辅助模块和根工作区统一使用 **Go 1.27.1**，与 otterIO、OC 一致。CI 从 `go.work` 读取版本，每个发行模块分别运行 Linux amd64、macOS ARM64 和 Windows amd64；检查脚本同时防止任一模块的 Go 声明偏离工作区。根 `go.work` 用于本地联合开发。
 
 ```sh
 python3 scripts/verify-upstreams.py
@@ -27,7 +27,7 @@ bash scripts/check-modules.sh cross
 bash scripts/check-modules.sh tools
 ```
 
-检查脚本逐个在 `GOWORK=off` 下运行，避免工作区掩盖缺失的模块依赖。可以在模式后指定单个发行模块。`cross` 只编译目标平台包和测试二进制；`tools` 检查保留的两个辅助模块：`md5-simd/_gen` 和 `simdjson-go/benchmarks`。
+检查脚本逐个在 `GOWORK=off` 下运行，避免工作区掩盖缺失的模块依赖；会收集所有选定模块的结果后返回总状态。可以在模式后指定单个发行模块。`cross` 只编译目标平台包和测试二进制；`tools` 实际运行 MD5 生成器并编译临时产物，执行保留 JSON 基准的烟测。扩展平台入口见 [CI_TESTS.md](docs/CI_TESTS.md)。
 
 `simdjson-go` 的解析器需要 amd64 上的 AVX2/CLMUL；ARM64 或 `noasm` 路径只有不支持平台的实现。宿主平台测试会报告 CPU 支持情况，不能将跳过解析测试当成该解析器已验证。
 

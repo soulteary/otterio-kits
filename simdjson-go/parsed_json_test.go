@@ -1,3 +1,4 @@
+// Updated by otterio-kits maintainers on 2026-10-08: use os.ReadFile for the Go 1.27 inline vet check.
 /*
  * MinIO Cloud Storage, (C) 2020 MinIO, Inc.
  *
@@ -20,8 +21,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -40,7 +41,7 @@ func loadCompressed(t tester, file string) (ref []byte) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ref, err = ioutil.ReadFile(filepath.Join("testdata", file+".json.zst"))
+	ref, err = os.ReadFile(filepath.Join("testdata", file+".json.zst"))
 	if err != nil {
 		t.Fatal(err)
 	}

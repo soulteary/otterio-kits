@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+// Modified by otterIO contributors in 2026: report worker errors without Fatalf.
 package sha256
 
 import (
@@ -239,11 +240,11 @@ func TestAvx512Server(t *testing.T) {
 			input[63-8+1+ii] = byte(len >> (56 - 8*ii))
 		}
 		go func(i int, uid uint64, input []byte) {
+			defer wg.Done()
 			output := server.Sum(uid, input)
 			if bytes.Compare(output[:], golden[offset+i].out[:]) != 0 {
-				t.Fatalf("Sum256 function: sha256(%s) = %s want %s", golden[offset+i].in, hex.EncodeToString(output[:]), hex.EncodeToString(golden[offset+i].out[:]))
+				t.Errorf("Sum256 function: sha256(%s) = %s want %s", golden[offset+i].in, hex.EncodeToString(output[:]), hex.EncodeToString(golden[offset+i].out[:]))
 			}
-			wg.Done()
 		}(i, uint64(Avx512ServerUID+i), input)
 	}
 
