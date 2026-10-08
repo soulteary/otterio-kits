@@ -17,13 +17,14 @@ runs:
         echo "go=$(go env GOVERSION)" >> "$GITHUB_OUTPUT"
         echo "cgo=$(go env CGO_ENABLED)" >> "$GITHUB_OUTPUT"
         echo "target=$(go env GOOS)-$(go env GOARCH)-$(go env GOAMD64)-$(go env GOARM64)" >> "$GITHUB_OUTPUT"
+        echo "image=${ImageOS:-unknown}" >> "$GITHUB_OUTPUT"
     - name: Restore the exact tool binary
       uses: actions/cache@v6.1.0
       with:
         path: ${{ runner.temp }}/otterio-ci-bin/${{ inputs.tool }}
         # No restore prefix: different versions, compilers and targets are not interchangeable.
         # Each tool has its own key, so another scanner cannot save a partial tool cache.
-        key: ci-tool-v1-${{ runner.os }}-${{ runner.arch }}-${{ env.ImageOS }}-${{ inputs.tool }}-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.go }}-cgo${{ steps.identity.outputs.cgo }}-${{ steps.identity.outputs.target }}-${{ hashFiles('.github/ci-tools.json', 'scripts/install-ci-tool.sh', 'scripts/check-ci-tool-cache.py') }}
+        key: ci-tool-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.identity.outputs.image }}-${{ inputs.tool }}-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.go }}-cgo${{ steps.identity.outputs.cgo }}-${{ steps.identity.outputs.target }}-${{ hashFiles('.github/ci-tools.json', 'scripts/install-ci-tool.sh', 'scripts/check-ci-tool-cache.py') }}
     - name: Install or validate the pinned tool
       shell: bash
       env:
