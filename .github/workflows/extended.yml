@@ -21,6 +21,9 @@ concurrency:
 env:
   GOTOOLCHAIN: local
   GOWORK: off
+  # These upstream checks exercise pure Go/assembly. The native 386 compiler
+  # otherwise enables cgo and requires unrelated 32-bit C system headers.
+  CGO_ENABLED: '0'
 
 jobs:
   platforms:

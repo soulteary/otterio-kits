@@ -1,6 +1,8 @@
+// Modified by otterIO contributors in 2026: format generated Go declarations.
 package main
 
 //go:generate go run gen.go -out ../md5block_amd64.s -stubs ../md5block_amd64.go -pkg=md5simd
+//go:generate gofmt -w ../md5block_amd64.go
 
 import (
 	x "github.com/mmcloughlin/avo/build"
@@ -50,7 +52,8 @@ func main() {
 	x.Constraint(buildtags.Not("noasm").ToConstraint())
 	x.Constraint(buildtags.Term("gc").ToConstraint())
 	x.TEXT("blockScalar", 0, "func(dig *[4]uint32, p []byte)")
-	x.Doc("Encode p to digest")
+	x.Doc("Encode p to digest.", "Modified by otterIO contributors in 2026: regenerated with the maintained Avo toolchain.")
+	x.Comment("Modified by otterIO contributors in 2026: regenerate without clobbering BP.")
 	x.Pragma("noescape")
 
 	srcLen := x.Load(x.Param("p").Len(), x.GP64())
