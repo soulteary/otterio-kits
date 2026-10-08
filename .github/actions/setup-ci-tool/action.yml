@@ -1,0 +1,34 @@
+name: Set up a pinned CI tool
+description: Cache one tool binary independently from module and build snapshots
+inputs:
+  tool:
+    description: Go tool name in the centralized CI manifest
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Resolve the pinned tool and compiler
+      id: identity
+      shell: bash
+      env:
+        CI_TOOL: ${{ inputs.tool }}
+      run: |
+        echo "version=$(python3 scripts/ci-tool-version.py "$CI_TOOL")" >> "$GITHUB_OUTPUT"
+        echo "go=$(go env GOVERSION)" >> "$GITHUB_OUTPUT"
+        echo "cgo=$(go env CGO_ENABLED)" >> "$GITHUB_OUTPUT"
+        echo "target=$(go env GOOS)-$(go env GOARCH)-$(go env GOAMD64)-$(go env GOARM64)" >> "$GITHUB_OUTPUT"
+    - name: Restore the exact tool binary
+      uses: actions/cache@v6.1.0
+      with:
+        path: ${{ runner.temp }}/otterio-ci-bin/${{ inputs.tool }}
+        # No restore prefix: different versions, compilers and targets are not interchangeable.
+        # Each tool has its own key, so another scanner cannot save a partial tool cache.
+        key: ci-tool-v1-${{ runner.os }}-${{ runner.arch }}-${{ env.ImageOS }}-${{ inputs.tool }}-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.go }}-cgo${{ steps.identity.outputs.cgo }}-${{ steps.identity.outputs.target }}-${{ hashFiles('.github/ci-tools.json', 'scripts/install-ci-tool.sh', 'scripts/check-ci-tool-cache.py') }}
+    - name: Install or validate the pinned tool
+      shell: bash
+      env:
+        CI_TOOL: ${{ inputs.tool }}
+        GOBIN: ${{ runner.temp }}/otterio-ci-bin
+      run: |
+        bash scripts/install-ci-tool.sh "$CI_TOOL"
+        echo "$GOBIN" >> "$GITHUB_PATH"

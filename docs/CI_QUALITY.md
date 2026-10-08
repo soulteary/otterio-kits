@@ -22,6 +22,8 @@ GOBIN=/tmp/otterio-ci-bin bash scripts/install-ci-tool.sh actionlint
 
 `.github/ci-tools.json` 是 Actions、govulncheck、golangci-lint、actionlint、benchstat 和 Trivy 的固定版本清单。Go 产品版本仍以 `go.work` 为准。Actions 的 `uses` 需要写字面量版本；`verify-ci-config.py` 校验它们与清单一致，并要求所有 CodeQL 步骤统一版本。工具安装器在模块之外安装固定 Go 工具版本，不向发行模块增加 CI 工具依赖。
 
+Go 工具通过 `.github/actions/setup-ci-tool` 按工具分别缓存可执行文件，避免每个模块重复编译同一工具。缓存键包含固定工具版本、Go 版本、runner 平台与架构、cgo 和指令集设置，以及清单和安装器内容；不使用跨版本的回退键。安装器在复用前读取 Go 构建元数据，核对包路径、版本、编译器和目标设置，失配时重新安装并再次核对。首次缓存未命中仍执行固定版本安装；检查范围、模块选择和必需门禁不受缓存命中影响。
+
 更新工具时同时更新清单和 workflow 字面量，运行 actionlint 和版本检查。actionlint 本身固定版本；使用其内置 shellcheck 集成（Linux runner 自带 shellcheck），检查表达式、任务依赖、矩阵、Actions 参数和 shell 命令。
 
 版本校验使用固定 PyYAML 的 SafeLoader 解析 YAML 节点，检查 workflow 的实际 job/step `uses` 和 composite action 的步骤。支持 `uses :`、引号键、flow mapping、折叠 scalar 和锚点/别名，不依赖文本行形状，也不会把 `run` 或环境变量中的字符串当成 action。Go/CLI 必须使用完整版本，拒绝 `v1`、`v1.2` 等浮动查询；Python 解析器版本也纳入公共清单和检查。

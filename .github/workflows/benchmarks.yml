@@ -63,12 +63,15 @@ jobs:
         run: bash scripts/check-reports.sh benchmark "$MODULE" "reports/benchmarks/$MODULE/base" "$GITHUB_WORKSPACE/.benchmark-baseline"
       - name: Benchmark head
         run: bash scripts/check-reports.sh benchmark "$MODULE" "reports/benchmarks/$MODULE/head"
+      - name: Install pinned benchstat
+        if: github.event_name == 'workflow_dispatch' && env.BASELINE_REF != ''
+        uses: ./.github/actions/setup-ci-tool
+        with:
+          tool: benchstat
       - name: Compare same-runner measurements with pinned benchstat
         if: github.event_name == 'workflow_dispatch' && env.BASELINE_REF != ''
         run: |
-          export GOBIN="$RUNNER_TEMP/otterio-report-tools"
-          bash scripts/install-ci-tool.sh benchstat
-          "$GOBIN/benchstat" "reports/benchmarks/$MODULE/base/benchmarks.txt" "reports/benchmarks/$MODULE/head/benchmarks.txt" | tee "reports/benchmarks/$MODULE/comparison.txt"
+          benchstat "reports/benchmarks/$MODULE/base/benchmarks.txt" "reports/benchmarks/$MODULE/head/benchmarks.txt" | tee "reports/benchmarks/$MODULE/comparison.txt"
           {
             printf '### %s benchmark comparison\n\n```text\n' "$MODULE"
             cat "reports/benchmarks/$MODULE/comparison.txt"

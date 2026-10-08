@@ -46,11 +46,9 @@ jobs:
             **/go.mod
             **/go.sum
       - name: Install pinned govulncheck
-        env:
-          GOBIN: ${{ runner.temp }}/otterio-ci-bin
-        run: |
-          bash scripts/install-ci-tool.sh govulncheck
-          echo "$GOBIN" >> "$GITHUB_PATH"
+        uses: ./.github/actions/setup-ci-tool
+        with:
+          tool: govulncheck
       - name: Scan module and tests
         env:
           MODULE: ${{ matrix.module }}
