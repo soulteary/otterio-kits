@@ -1,0 +1,138 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Retain weekly scanning from the imported CodeQL workflows.
+    - cron: '37 4 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+  GOFLAGS: -mod=readonly
+
+jobs:
+  govulncheck:
+    name: govulncheck / ${{ matrix.module }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - highwayhash
+          - sha256-simd
+          - simdjson-go
+          - sio
+          - crc64nvme
+          - md5-simd
+          - md5-simd/_gen
+          - simdjson-go/benchmarks
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Install pinned govulncheck
+        env:
+          GOBIN: ${{ runner.temp }}/otterio-ci-bin
+        run: |
+          bash scripts/install-ci-tool.sh govulncheck
+          echo "$GOBIN" >> "$GITHUB_PATH"
+      - name: Scan module and tests
+        env:
+          MODULE: ${{ matrix.module }}
+        run: bash scripts/check-security.sh "$MODULE"
+
+  codeql:
+    name: CodeQL / ${{ matrix.module }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - highwayhash
+          - sha256-simd
+          - simdjson-go
+          - sio
+          - crc64nvme
+          - md5-simd
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Initialize module database
+        uses: github/codeql-action/init@v4.38.2
+        with:
+          languages: go
+          build-mode: manual
+          source-root: ${{ matrix.module }}
+          # Use this action release's linked bundle rather than a changing
+          # server-selected default tool bundle.
+          tools: linked
+      - name: Build selected module for extraction
+        working-directory: ${{ matrix.module }}
+        run: go build -a ./...
+      - name: Analyze module
+        uses: github/codeql-action/analyze@v4.38.2
+        with:
+          category: /language:go/module:${{ matrix.module }}
+
+  trivy:
+    name: Trivy / sio
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read pinned Trivy CLI version
+        id: version
+        run: echo "trivy=$(python3 scripts/ci-tool-version.py trivy)" >> "$GITHUB_OUTPUT"
+      - name: Scan SIO filesystem
+        # v0.36.0; use an immutable SHA, including SHA-pinned dependencies.
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8
+        with:
+          version: ${{ steps.version.outputs.trivy }}
+          scan-type: fs
+          scan-ref: sio
+          scanners: vuln,secret
+          format: sarif
+          output: sio-trivy.sarif
+          # Preserve upstream's report-only finding policy. Scanner failures
+          # still fail the job; govulncheck gates reachable Go vulnerabilities.
+          exit-code: '0'
+      - name: Upload SIO findings
+        if: always() && hashFiles('sio-trivy.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4.38.2
+        with:
+          sarif_file: sio-trivy.sarif
+          category: trivy/sio

@@ -1,0 +1,57 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GOWORK: 'off'
+  GOTOOLCHAIN: local
+
+jobs:
+  lint:
+    name: Lint / ${{ matrix.module }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - highwayhash
+          - sha256-simd
+          - simdjson-go
+          - sio
+          - crc64nvme
+          - md5-simd
+          - md5-simd/_gen
+          - simdjson-go/benchmarks
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            **/go.mod
+            **/go.sum
+      - name: Install pinned golangci-lint
+        env:
+          GOBIN: ${{ runner.temp }}/otterio-ci-bin
+        run: |
+          bash scripts/install-ci-tool.sh golangci-lint
+          echo "$GOBIN" >> "$GITHUB_PATH"
+      - name: Check module policy
+        env:
+          MODULE: ${{ matrix.module }}
+          GOLANGCI_LINT_CACHE: ${{ runner.temp }}/golangci-lint-cache
+        run: bash scripts/check-lint.sh "$MODULE"

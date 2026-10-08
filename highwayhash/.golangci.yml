@@ -1,28 +1,31 @@
-linters-settings:
-  golint:
-    min-confidence: 0
-
-  misspell:
-    locale: US
-
+# Migrated by otterio-kits maintainers on 2026-10-08 from the imported v1 policy.
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
-    - typecheck
-    - goimports
     - misspell
     - govet
     - revive
     - ineffassign
-    - gosimple
+    - staticcheck
     - unparam
     - unused
-
-issues:
-  exclude-use-default: false
-  exclude:
-      - should have a package comment
-      - error strings should not be capitalized or end with punctuation or a newline
-      - should have comment           # TODO(aead): Remove once all exported ident. have comments!
-service:
-  golangci-lint-version: 1.51.2 # use the fixed version to not introduce new linters unexpectedly
+  settings:
+    misspell:
+      locale: US
+    staticcheck:
+      # The old gosimple linter is part of staticcheck in v2.
+      checks: ["S*"]
+  exclusions:
+    # Preserve the old exclusions rather than enabling v2 common presets.
+    presets: []
+    rules:
+      - linters: [revive]
+        text: should have a package comment
+      - linters: [revive]
+        text: error strings should not be capitalized or end with punctuation or a newline
+      - linters: [revive]
+        text: should have comment
+formatters:
+  enable:
+    - goimports
