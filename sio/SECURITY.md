@@ -12,15 +12,16 @@ We recommend always using the latest version to ensure you have the most recent 
 
 ## Reporting a Vulnerability
 
-The MinIO team takes security vulnerabilities seriously. We appreciate your efforts to responsibly disclose your findings.
+The otterio-kits maintainers takes security vulnerabilities seriously. We appreciate your efforts to responsibly disclose your findings.
 
 ### How to Report
 
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please report security vulnerabilities by emailing:
-
-**security@min.io**
+Report vulnerabilities through the private reporting channel at
+[soulteary/otterio-kits Security](https://github.com/soulteary/otterio-kits/security).
+If private reporting is unavailable, open an issue requesting a private contact
+without including vulnerability details. Do not send reports about this fork to the upstream team.
 
 Include the following information in your report:
 
@@ -33,10 +34,10 @@ Include the following information in your report:
 
 ### What to Expect
 
-- **Acknowledgment**: You will receive an acknowledgment of your report within 48 hours.
+- **Acknowledgment**: Maintainers will review reports as availability permits; no response deadline is promised.
 - **Communication**: We will keep you informed of the progress toward a fix and public disclosure.
 - **Credit**: We will credit you in the security advisory (unless you prefer to remain anonymous).
-- **Timeline**: We aim to patch critical vulnerabilities within 30 days of responsible disclosure.
+- **Timeline**: Fix and disclosure timing depends on the finding and maintainer availability.
 
 ## Security Best Practices
 
@@ -99,9 +100,9 @@ When using `sio`, follow these security best practices:
 
 ## Audit History
 
-- **2018**: Initial implementation review
-- **2024**: Ongoing maintenance and security updates
-- **TBD**: Formal cryptographic audit (planned)
+The inherited documentation mentions upstream reviews and maintenance. Those
+statements do not establish an independent audit of this fork. No independent
+cryptographic audit of the otterio-kits module is claimed here.
 
 ## Security Updates
 
@@ -116,7 +117,7 @@ Subscribe to repository releases to be notified of security updates.
 ## References
 
 - [DARE Specification](DARE.md)
-- [MinIO Security](https://min.io/security)
+- [otterio-kits Security](https://github.com/soulteary/otterio-kits/security)
 - [Go Cryptography Policy](https://golang.org/security)
 
 ## Hall of Fame

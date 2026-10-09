@@ -1,11 +1,5 @@
 > **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/sio`, based on MinIO `sio` `v0.5.1`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/minio/sio.svg)](https://pkg.go.dev/github.com/minio/sio)
-[![Go](https://github.com/minio/sio/actions/workflows/go.yml/badge.svg)](https://github.com/minio/sio/actions/workflows/go.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/minio/sio)](https://goreportcard.com/report/github.com/minio/sio)
-[![Security](https://img.shields.io/badge/Security-Policy-blue)](SECURITY.md)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-
 # Secure IO
 
 ## Go implementation of the Data At Rest Encryption (DARE) format.
@@ -41,8 +35,8 @@ because every chunk is encrypted separately. Therefore the order of the chunks m
 encoded somehow into the chunks itself to be able to detect rearranging any number of
 chunks.
 
-This project specifies a [format](https://github.com/minio/sio/blob/master/DARE.md) for
-en/decrypting an arbitrary data stream and gives some [recommendations](https://github.com/minio/sio/blob/master/DARE.md#appendices)
+This project specifies a [format](DARE.md) for
+en/decrypting an arbitrary data stream and gives some [recommendations](DARE.md#appendices)
 about how to use and implement data at rest encryption (DARE). Additionally this project
 provides a reference implementation in Go.
 
@@ -61,7 +55,7 @@ Its main properties are:
 
 **Install:** `go get -u github.com/soulteary/otterio-kits/sio`
 
-DARE and `github.com/minio/sio` are stable and production-ready.
+The upstream documentation describes DARE and `github.com/minio/sio` as stable and production-ready. This fork has its own releases and validation; see the [maintenance guide](../docs/MAINTENANCE.md).
 
 We also provide a CLI tool to en/decrypt arbitrary data streams directly from
 your command line:

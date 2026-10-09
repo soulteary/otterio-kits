@@ -10,7 +10,7 @@ Be respectful and professional in all interactions. We're here to build great so
 
 ### Prerequisites
 
-- Go 1.24 or later
+- The Go version declared in the repository `go.work`
 - Git
 - golangci-lint (for linting)
 - Basic understanding of cryptography (helpful but not required)
@@ -20,8 +20,8 @@ Be respectful and professional in all interactions. We're here to build great so
 1. Fork the repository on GitHub
 2. Clone your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/sio.git
-   cd sio
+   git clone https://github.com/YOUR_USERNAME/otterio-kits.git
+   cd otterio-kits/sio
    ```
 3. Add the upstream repository:
    ```bash
@@ -248,8 +248,8 @@ benchstat old.txt new.txt
 
 - **Questions**: Open a GitHub Discussion
 - **Bugs**: Open a GitHub Issue
-- **Security**: Email security@min.io
-- **Chat**: Join MinIO Slack (link in README)
+- **Security**: Follow [SECURITY.md](SECURITY.md) for private reporting
+- **Questions**: Use [otterio-kits issues](https://github.com/soulteary/otterio-kits/issues)
 
 ## Recognition
 

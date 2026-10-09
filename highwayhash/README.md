@@ -1,13 +1,10 @@
 > **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/highwayhash`, based on MinIO `highwayhash` `v1.0.4`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
 
-[![Godoc Reference](https://godoc.org/github.com/minio/highwayhash?status.svg)](https://godoc.org/github.com/minio/highwayhash)
-[![Build Status](https://travis-ci.org/minio/highwayhash.svg?branch=master)](https://travis-ci.org/minio/highwayhash)
-
 ## HighwayHash
 
 [HighwayHash](https://github.com/google/highwayhash) is a pseudo-random-function (PRF) developed by Jyrki Alakuijala, Bill Cox and Jan Wassenberg (Google research). HighwayHash takes a 256 bit key and computes 64, 128 or 256 bit hash values of given messages.
 
-It can be used to prevent hash-flooding attacks or authenticate short-lived messages. Additionally it can be used as a fingerprinting function. HighwayHash is not a general purpose cryptographic hash function (such as Blake2b, SHA-3 or SHA-2) and should not be used if strong collision resistance is required. 
+It can be used to prevent hash-flooding attacks or authenticate short-lived messages. Additionally it can be used as a fingerprinting function. HighwayHash is not a general purpose cryptographic hash function (such as Blake2b, SHA-3 or SHA-2) and should not be used if strong collision resistance is required.
 
 This repository contains a native Go version and optimized assembly implementations for Intel, ARM and ppc64le architectures.
 
@@ -40,7 +37,7 @@ BenchmarkSum256_10M     		12458.65 MB/s
 BenchmarkSum256_25M     		11927.25 MB/s
 ```
 
-So for moderately sized messages it tops out at about 15 GB/sec. Also for small messages (1K) the performance is already at approximately 60% of the maximum throughput. 
+So for moderately sized messages it tops out at about 15 GB/sec. Also for small messages (1K) the performance is already at approximately 60% of the maximum throughput.
 
 ### ARM Performance
 
@@ -82,7 +79,7 @@ BenchmarkSHA512           	    	  562.04 MB/s
 BenchmarkSHA256           	    	  383.07 MB/s
 ```
 
-*Note: the AVX512 version of SHA256 uses the [multi-buffer crypto library](https://github.com/intel/intel-ipsec-mb) technique as developed by Intel, more details can be found in [sha256-simd](https://github.com/minio/sha256-simd/).*
+*Note: the AVX512 version of SHA256 uses the [multi-buffer crypto library](https://github.com/intel/intel-ipsec-mb) technique as developed by Intel, more details can be found in [sha256-simd](../sha256-simd/README.md).*
 
 ### Qualitative assessment
 

@@ -2,16 +2,16 @@
 
 # sha256-simd
 
-Accelerate SHA256 computations in pure Go using AVX512, SHA Extensions for x86 and ARM64 for ARM. 
+Accelerate SHA256 computations in pure Go using AVX512, SHA Extensions for x86 and ARM64 for ARM.
 On AVX512 it provides an up to 8x improvement (over 3 GB/s per core).
 SHA Extensions give a performance boost of close to 4x over native.
 
 ## Introduction
 
-This package is designed as a replacement for `crypto/sha256`. 
+This package is designed as a replacement for `crypto/sha256`.
 For ARM CPUs with the Cryptography Extensions, advantage is taken of the SHA2 instructions resulting in a massive performance improvement.
 
-This package uses Golang assembly. 
+This package uses Golang assembly.
 The AVX512 version is based on the Intel's "multi-buffer crypto library for IPSec" whereas the other Intel implementations are described in "Fast SHA-256 Implementations on Intel Architecture Processors" by J. Guilford et al.
 
 ## Support for Intel SHA Extensions
@@ -44,7 +44,7 @@ Transposing the input messages means that in order to take full advantage of the
 
 Whereas the original Intel C implementation requires some sort of explicit scheduling of messages to be processed in parallel, for Golang it makes sense to take advantage of channels in order to group messages together and use channels as well for sending back the results (thereby effectively decoupling the calculations). We have implemented a fairly simple scheduling mechanism that seems to work well in practice.
 
-Due to this different way of scheduling, we decided to use an explicit method to instantiate the AVX512 version. Essentially one or more AVX512 processing servers ([`Avx512Server`](https://github.com/minio/sha256-simd/blob/master/sha256blockAvx512_amd64.go#L294)) have to be created whereby each server can hash over 3 GB/s on a single core. An `hash.Hash` object ([`Avx512Digest`](https://github.com/minio/sha256-simd/blob/master/sha256blockAvx512_amd64.go#L45)) is then instantiated using one of these servers and used in the regular fashion:
+Due to this different way of scheduling, we decided to use an explicit method to instantiate the AVX512 version. Essentially one or more AVX512 processing servers ([`Avx512Server`](https://github.com/soulteary/otterio-kits/blob/main/sha256-simd/sha256blockAvx512_amd64.go#L294)) have to be created whereby each server can hash over 3 GB/s on a single core. An `hash.Hash` object ([`Avx512Digest`](https://github.com/soulteary/otterio-kits/blob/main/sha256-simd/sha256blockAvx512_amd64.go#L45)) is then instantiated using one of these servers and used in the regular fashion:
 
 ```go
 import "github.com/soulteary/otterio-kits/sha256-simd"
@@ -66,7 +66,7 @@ More detailed information can be found in this [blog](https://blog.minio.io/acce
 
 ## Drop-In Replacement
 
-The following code snippet shows how you can use `github.com/minio/sha256-simd`. 
+The following code snippet shows how you can use `github.com/soulteary/otterio-kits/sha256-simd`.
 This will automatically select the fastest method for the architecture on which it will be executed.
 
 ```go
@@ -102,7 +102,7 @@ Other applications that can benefit from enhanced SHA256 performance are dedupli
 
 ## ARM SHA Extensions
 
-The 64-bit ARMv8 core has introduced new instructions for SHA1 and SHA2 acceleration as part of the [Cryptography Extensions](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0501f/CHDFJBCJ.html). Below you can see a small excerpt highlighting one of the rounds as is done for the SHA256 calculation process (for full code see [sha256block_arm64.s](https://github.com/minio/sha256-simd/blob/master/sha256block_arm64.s)).
+The 64-bit ARMv8 core has introduced new instructions for SHA1 and SHA2 acceleration as part of the [Cryptography Extensions](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0501f/CHDFJBCJ.html). Below you can see a small excerpt highlighting one of the rounds as is done for the SHA256 calculation process (for full code see [sha256block_arm64.s](https://github.com/soulteary/otterio-kits/blob/main/sha256-simd/sha256block_arm64.s)).
 
  ```
  sha256h    q2, q3, v9.4s
