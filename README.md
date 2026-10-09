@@ -15,7 +15,7 @@
 
 ## 开发和验证
 
-六个发行模块、两个辅助模块和根工作区统一使用 **Go 1.27.1**，与 otterIO、OC 一致。CI 从 `go.work` 读取版本，每个发行模块分别运行 Linux amd64、macOS ARM64 和 Windows amd64；检查脚本同时防止任一模块的 Go 声明偏离工作区。根 `go.work` 用于本地联合开发。
+六个发行模块、两个辅助模块和根工作区统一使用 **Go 1.27.2**，与 otterIO、OC 一致。CI 从 `go.work` 读取版本，每个发行模块分别运行 Linux amd64、macOS ARM64 和 Windows amd64；检查脚本同时防止任一模块的 Go 声明偏离工作区。根 `go.work` 用于本地联合开发。
 
 ```sh
 python3 scripts/verify-upstreams.py

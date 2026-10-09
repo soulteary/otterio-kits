@@ -2,7 +2,7 @@
 // Updated by otterio-kits maintainers on 2026-10-08: aligned Go 1.27.1 and refreshed dependencies.
 module github.com/soulteary/otterio-kits/md5-simd/_gen
 
-go 1.27.1
+go 1.27.2
 
 require github.com/mmcloughlin/avo v0.6.0
 
