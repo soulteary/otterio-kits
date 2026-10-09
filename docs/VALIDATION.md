@@ -1,52 +1,52 @@
-# 初次导入与验证记录
+# Initial import and validation record
 
-日期：2026-10-08（Asia/Shanghai）。本机工具链 `go1.27.1 darwin/arm64`。
+Date: 2026-10-08 (Asia/Shanghai). Local toolchain: `go1.27.1 darwin/arm64`.
 
-本文保存初次维护提交 `31f7ef5` 的历史验收结果。后续工具链、依赖升级与 CI 修复见 [UPGRADE.md](UPGRADE.md)；当前要求以根 README、go.work 和 CI 为准。
+This historical record preserves acceptance results for initial maintenance commit `31f7ef5`. See [UPGRADE.md](UPGRADE.md) for later toolchain/dependency upgrades and CI fixes. Current requirements come from the root README, `go.work`, and CI.
 
-## 已完成的维护基线
+## Completed maintenance baseline
 
-六库以不带 `--squash` 的 `git subtree add` 导入；每个导入合并提交的第二父提交就是对应上游版本 SHA，导入时子目录树与上游原树完全一致。
+The six libraries were imported with `git subtree add` without `--squash`. Each import merge's second parent is the upstream version SHA, and its component subtree exactly matches the original upstream tree.
 
-- highwayhash `v1.0.4`：74 个原提交；导入 `64a6c5bc32d33e94c9e80ef5a2d52de013db292c`。
-- sha256-simd `v1.0.1`：92 个原提交；导入 `62753cf46186b1345981718538304fe061cfe03d`。
-- simdjson-go `v0.4.5`：451 个原提交；导入 `c55169ea6c677816e320faeaa435c6a9b795eeef`。
-- sio `v0.5.1`：44 个原提交；导入 `f59beba80d0adab7f6e83074c4e107e8aa328355`。
-- crc64nvme `v1.1.1`：20 个原提交；导入 `e6616cbb3a6c4cbc20709fcb38c598e943888d6a`。
-- md5-simd `v1.1.2`：115 个原提交；导入 `0d5cd410f1c037d85999fa73aae99cb2f3e15f7e`。
+- highwayhash `v1.0.4`: 74 original commits; import `64a6c5bc32d33e94c9e80ef5a2d52de013db292c`.
+- sha256-simd `v1.0.1`: 92 original commits; import `62753cf46186b1345981718538304fe061cfe03d`.
+- simdjson-go `v0.4.5`: 451 original commits; import `c55169ea6c677816e320faeaa435c6a9b795eeef`.
+- sio `v0.5.1`: 44 original commits; import `f59beba80d0adab7f6e83074c4e107e8aa328355`.
+- crc64nvme `v1.1.1`: 20 original commits; import `e6616cbb3a6c4cbc20709fcb38c598e943888d6a`.
+- md5-simd `v1.1.2`: 115 original commits; import `0d5cd410f1c037d85999fa73aae99cb2f3e15f7e`.
 
-总计与去重后均为 **796 个原始提交**。完整上游 SHA、原树、来源引用及后续改动记录在 `UPSTREAMS.json`。初次来源字段不变，今后更新追加到 `updates`。
+Both the summed and deduplicated total are **796 original commits**. Full upstream SHAs, original trees, provenance references, and later maintenance records are in `UPSTREAMS.json`. Initial provenance fields remain immutable; future upstream updates are appended to `updates`.
 
-模块路径、示例、自引用和维护配置在六次导入之后另行提交。六个发行模块的依赖版本、原 `go.sum`、公开 API、算法和原 Apache `LICENSE` 保持基线。100 个上游 Go / 汇编文件逐字反向比对：移除本次修改通知并还原声明的自引用路径后与原始文件一致。
+Module paths, examples, self-imports, and maintenance configuration were committed separately after the six imports. The six runtime modules initially retained baseline dependencies, original `go.sum`, public APIs, algorithms, and Apache LICENSE files. Reverse comparison of 100 upstream Go/assembly files found byte-for-byte equality after removing added modification notices and restoring declared self-import paths.
 
-辅助模块 `md5-simd/_gen` 和 `simdjson-go/benchmarks` 的路径同步迁移。基准模块保留本地父目录 replace；`go mod tidy -go=1.17` 对齐父库原本就选中的 compress `v1.15.15`、cpuid/v2 `v2.2.3` 和 x/sys 依赖，更新它自己的 `go.sum`。这项变动不改变六个发行库的依赖。
+The helper paths `md5-simd/_gen` and `simdjson-go/benchmarks` also migrated. Benchmarks retained their local parent replace. `go mod tidy -go=1.17` aligned the benchmark module with the parent's already-selected compress `v1.15.15`, cpuid/v2 `v2.2.3`, and x/sys dependency and updated its own `go.sum`. This did not change dependencies of the six runtime libraries.
 
-补充了六模块各自 NOTICE、两份 Go BSD 全文和 MD5 的 Igneous MIT 全文；原始头部署名和已有许可证未替换。
+Six module NOTICE files, two full Go BSD texts, and MD5's full Igneous MIT text were added. Original source attribution and existing licenses were retained.
 
-## 实际执行的验证
+## Checks actually performed
 
-以下命令均已通过。Go 缓存使用 `/private/tmp/otterio-compat-modcache` 和 `/private/tmp/otterio-kits-gocache`，下载的依赖版本由各模块既有声明约束；检查使用只读模块模式。
+The following checks passed at this stage. Go caches were `/private/tmp/otterio-compat-modcache` and `/private/tmp/otterio-kits-gocache`; existing module declarations constrained downloads, and checks used readonly metadata.
 
-- `python3 scripts/verify-upstreams.py`：非浅历史、祖先关系、六个原树、导入子树、原提交数和来源 tag 全部通过。
-- `bash scripts/check-modules.sh layout`：发现全部八个 go.mod，工作区恰含六个发行库，逐模块许可材料齐全。临时副本验证了“新增未登记模块”和“工作区漏模块”会失败。
-- `bash scripts/check-modules.sh verify`：八个模块在 `GOWORK=off` 下的依赖图、测试依赖和缓存校验通过。
-- `bash scripts/check-modules.sh test`：六个库的宿主平台原测试通过；附带命令和示例包可编译。
-- `bash scripts/check-modules.sh noasm`：highwayhash、sha256-simd、crc64nvme、md5-simd 四库通过。sio 没有该构建标签；simdjson 不提供可用的无汇编解析器，按脚本说明跳过。
-- `bash scripts/check-modules.sh race`：六库的宿主平台 race 检查通过，SIMDJSON 仍受下面的平台限制。
-- `bash scripts/check-modules.sh tools`：汇编生成器与基准工具编译通过；未运行生成器、未执行性能基准。
-- `bash scripts/check-modules.sh cross`：六库的 Linux ARM64 包和测试二进制编译通过。
-- `CROSS_GOARCH=amd64 bash scripts/check-modules.sh cross`：六库的 Linux amd64 包和测试二进制编译通过；最后一个模块补齐固定依赖后单独重跑通过。
-- `GOWORK="$PWD/go.work" go test ./highwayhash/... ./sha256-simd/... ./simdjson-go/... ./sio/... ./crc64nvme/... ./md5-simd/...`：联合工作区测试通过。
-- Bash 语法、CI YAML 解析和 `git diff --check`：通过。
+- `python3 scripts/verify-upstreams.py`: full history, ancestry, six original trees, imported subtrees, original commit counts, and provenance tags.
+- `bash scripts/check-modules.sh layout`: all eight go.mod files discovered; the workspace contained exactly six runtime modules; per-module license materials complete. Temporary copies confirmed failure for an unregistered new module and an omitted workspace module.
+- `bash scripts/check-modules.sh verify`: independent `GOWORK=off` dependency graphs, test dependencies, and cache verification for eight modules.
+- `bash scripts/check-modules.sh test`: original host tests for six libraries; included commands and examples compiled.
+- `bash scripts/check-modules.sh noasm`: highwayhash, sha256-simd, crc64nvme, and md5-simd passed. sio has no such tag; simdjson has no usable noasm parser and was skipped as documented by the script.
+- `bash scripts/check-modules.sh race`: host race checks for six libraries, with the SIMDJSON platform limitation below.
+- `bash scripts/check-modules.sh tools`: assembly generator and benchmark tools compiled. The generator and performance benchmarks were not executed at this stage.
+- `bash scripts/check-modules.sh cross`: six libraries' Linux ARM64 packages and test binaries compiled.
+- `CROSS_GOARCH=amd64 bash scripts/check-modules.sh cross`: six libraries' Linux amd64 packages and test binaries compiled. The final module passed a separate rerun after its pinned dependencies were available.
+- `GOWORK="$PWD/go.work" go test ./highwayhash/... ./sha256-simd/... ./simdjson-go/... ./sio/... ./crc64nvme/... ./md5-simd/...`: joint workspace tests.
+- Bash syntax, CI YAML parsing, and `git diff --check`.
 
-交叉编译明确只生成目标平台程序，不运行 Linux 测试。
+Cross-compilation only generated target-platform programs; it did not run Linux tests.
 
-## 尚未执行的范围
+## Scope not executed at this stage
 
-本机 `simdjson.SupportedCPU()` 返回 false：ARM64 没有 SIMDJSON 解析器实现，实际解析测试会跳过。其测试命令成功只能说明当前可编译路径通过，不能证明 amd64 解析器或 SIMD 汇编路径正确。
+Local `simdjson.SupportedCPU()` returned false. ARM64 has no SIMDJSON parser implementation, so actual parsing tests skipped. A passing command established only the current compilable path, not amd64 parser or SIMD assembly correctness.
 
-根 CI 已设置完整历史校验、Go 1.27.1 Linux amd64 / macOS ARM64 和 Go 1.24 系列兼容检查。Linux amd64 测试强制核对 AVX2/CLMUL 能力，以免解析测试全跳过。远端 CI、本机以外的 CPU 运行以及 Go 1.24 系列检查尚待推送后执行，不能写成已通过。
+At initial acceptance, root CI was configured for full-history verification, Go 1.27.1 Linux amd64/macOS ARM64, and Go 1.24 compatibility checks. Linux amd64 required AVX2/CLMUL to avoid all parser tests skipping. Remote CI, CPUs beyond the local host, and Go 1.24 checks had not run and could not be reported as passed. This describes the initial configuration, not the current workflows.
 
-未执行 otterIO / OC 依赖切换、旧磁盘校验和历史密文产品回归；未接收 tag 之后的未发布补丁。许可历史的剩余核查范围见 [LICENSES.md](LICENSES.md)。
+No otterIO / OC dependency switch, existing-disk checksum regression, historical-ciphertext product regression, or post-tag unreleased patches were included. Remaining license-history checks are documented in [LICENSES.md](LICENSES.md).
 
-本次没有推送远端，没有创建正式发行版本。下一阶段按执行计划审查未发布修复与数据兼容性，再安排独立发行和产品迁移。
+This initial stage did not push remotely or create formal releases. The next stage was to review unreleased fixes and data compatibility, then arrange independent releases and product migrations.

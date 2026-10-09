@@ -1,25 +1,25 @@
-# CI 迁移与原始检查对应关系
+# CI migration and original check mapping
 
-当前工作树只保留根 `.github/workflows` 中的可执行工作流。删除的八份子工作流仍可在 `UPSTREAMS.json` 记录的原始导入提交中读取；没有重写、裁剪上游历史。
+Executable workflows are retained only in the root `.github/workflows`. The eight removed module workflows remain readable at the original import commits recorded in `UPSTREAMS.json`; upstream history has not been rewritten or trimmed.
 
-`python3 scripts/verify-ci-layout.py` 检查六个导入目录及其嵌套工具目录。出现 `.github/workflows` 或误拼的 `.github/workflow` 时失败，即使目录为空也会提示。subtree 更新后先检查恢复的 CI 内容，将有价值的检查迁移到根入口，再移除子工作流。
+`python3 scripts/verify-ci-layout.py` checks all six imported directories and nested tool directories. It fails for `.github/workflows` or the misspelled `.github/workflow`, including empty directories. After a subtree update, review restored CI files, migrate useful checks to the root, then remove nested workflows.
 
-## 原检查的迁移范围
+## Migrated checks
 
-以下范围分别由五个 CI PR 实现。检查命令按模块运行；Go 从 `go.work` 读取版本，不再保留过期 Go 版本矩阵。
+The following work was implemented across five CI PRs. Commands run per module, and Go is read from `go.work` instead of retaining an obsolete Go version matrix.
 
-- `highwayhash/go.yml`：三平台测试、noasm、vet、原 golangci-lint 规则；迁入根模块测试、质量和 lint 入口。
-- `highwayhash/codeql.yml`：CodeQL 和每周扫描；迁入根安全入口，与 CRC64 使用同一固定版本。
-- `sha256-simd/go.yml`：三平台 race、格式、汇编声明 vet、`test-architectures.sh`；迁入根模块测试、完整 vet、格式和扩展平台入口。完整 vet 包含 asmdecl。
-- `simdjson-go/go.yml`：三平台测试、短 race、格式/vet、Linux 386；保留 noasm 只有不支持平台桩实现的事实，不把跳过解析器测试当作成功验证。
-- `simdjson-go/vulncheck.yml`：govulncheck；改为固定工具版本，逐模块扫描发行模块与两个辅助模块。
-- `sio/go.yml`：三平台 race、vet/格式、原 lint 规则、atomic 覆盖率/Codecov、Trivy SARIF；分别迁入测试、质量、lint、安全、覆盖率入口。
-- `crc64nvme/go.yml`：三平台测试、noasm、`-cpu=1,4 -short -race`、格式/vet、Linux 386；迁入对应模块任务。
-- `crc64nvme/codeql-analysis.yml`：CodeQL 和每周扫描；迁入统一安全入口。
+- `highwayhash/go.yml`: three-platform tests, noasm, vet, and original golangci-lint rules moved to module test, quality, and lint workflows.
+- `highwayhash/codeql.yml`: CodeQL and weekly scans moved to the root security workflow, using the same pinned version as CRC64.
+- `sha256-simd/go.yml`: three-platform race tests, formatting, assembly-declaration vet, and `test-architectures.sh` moved to module tests, full vet, formatting, and extended-platform checks. Full vet includes asmdecl.
+- `simdjson-go/go.yml`: three-platform tests, short race tests, formatting/vet, and Linux 386 checks were retained. Its noasm path only provides unsupported-platform stubs; skipped parser tests do not count as parser validation.
+- `simdjson-go/vulncheck.yml`: govulncheck now uses a pinned tool version and scans the six runtime modules and two helper modules separately.
+- `sio/go.yml`: three-platform race tests, vet/formatting, original lint rules, atomic coverage/Codecov, and Trivy SARIF moved to test, quality, lint, security, and coverage workflows.
+- `crc64nvme/go.yml`: three-platform tests, noasm, `-cpu=1,4 -short -race`, formatting/vet, and Linux 386 moved to the corresponding module jobs.
+- `crc64nvme/codeql-analysis.yml`: CodeQL and weekly scans moved to the unified security workflow.
 
-MD5 原来没有 GitHub 工作流。新入口为它补齐逐模块测试、格式、vet、lint 和安全检查；生成器作为 `md5-simd/_gen` 独立任务。`simdjson-go/benchmarks` 同样保留独立模块，基准烟测与长期性能比较分别运行。
+MD5 had no upstream GitHub workflow. Root workflows add module tests, formatting, vet, lint, and security checks. Its generator runs as the separate `md5-simd/_gen` task. `simdjson-go/benchmarks` remains a separate module; benchmark smoke tests and longer performance comparisons run separately.
 
-## 更新时的检查
+## Checks after an update
 
 ```sh
 python3 scripts/verify-ci-layout.py
@@ -27,4 +27,4 @@ python3 scripts/verify-upstreams.py
 bash scripts/check-modules.sh verify
 ```
 
-原始文件示例：`git show <highwayhash 的 import.commit>:highwayhash/.github/workflows/go.yml`。从 `UPSTREAMS.json` 取实际导入 SHA；后续维护提交删除文件不改变该提交的树对象。
+For example, read an original workflow with `git show <highwayhash-import-commit>:highwayhash/.github/workflows/go.yml`. Obtain the actual import SHA from `UPSTREAMS.json`. Deleting a file in a later maintenance commit does not change the import commit's tree.

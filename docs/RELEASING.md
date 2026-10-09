@@ -1,12 +1,12 @@
-# 逐模块发布
+# Per-module releases
 
-`otterio-kits` 维护六个独立的 Go 库。一个 Git 提交可以包含多个模块的改动，但每个模块有自己的版本、tag 和发行说明；修改 `simdjson-go` 不要求同时发布 CRC 或加密库。根目录没有用于发行的 `go.mod`，也不发布一个包含六库的根 Go 模块。
+`otterio-kits` maintains six independent Go libraries. One Git commit may change multiple modules, but each module has its own version, tag, and release notes. Changing `simdjson-go` does not require releasing the CRC or encryption libraries. There is no root release `go.mod` or root Go module containing all six libraries.
 
-本文是维护者的操作指南。仓库已有主线和模块 CI，当前没有自动发布工作流，也没有正式发行 tag 的 CI 触发入口。下面的发布命令须由维护者在完成检查后执行；本文中的候选版本和命令不表示已经发布。
+This is a maintainer runbook. Mainline and module CI are available, but there is currently no automatic release workflow or CI trigger for formal release tags. Maintainers execute the release commands after completing checks. Candidate versions and commands below do not indicate published releases.
 
-## 模块身份与首发候选
+## Module identity and first-release candidates
 
-模块路径已迁移为 `github.com/soulteary/otterio-kits/<目录>`。Go 子目录模块的 tag 必须包含目录前缀，而消费者使用的版本号不含这个前缀。例如：
+Module paths have migrated to `github.com/soulteary/otterio-kits/<directory>`. Go subdirectory-module tags must include the directory prefix; consumer version numbers omit it. For example:
 
 ```text
 module: github.com/soulteary/otterio-kits/crc64nvme
@@ -14,18 +14,18 @@ Git tag: crc64nvme/v1.1.2
 go.mod: github.com/soulteary/otterio-kits/crc64nvme v1.1.2
 ```
 
-以下候选沿用上游版本序列，递增一个补丁号，便于说明导入基线和 OtterIO 维护版的关系。它们是六个新模块路径的首发候选，不是已发行版本，也不表示与 MinIO 同名版本具有相同内容：
+These candidates continue the upstream version sequence with one patch increment to show the relationship between the import baseline and the OtterIO maintenance release. They are first-release candidates for six new module paths, not published versions or claims of identical content to similarly numbered MinIO releases:
 
-- `highwayhash/v1.0.5`：基于上游 `v1.0.4`。
-- `sha256-simd/v1.0.2`：基于上游 `v1.0.1`。
-- `simdjson-go/v0.4.6`：基于上游 `v0.4.5`。
-- `sio/v0.5.2`：基于上游 `v0.5.1`。
-- `crc64nvme/v1.1.2`：基于上游 `v1.1.1`。
-- `md5-simd/v1.1.3`：基于上游 `v1.1.2`。
+- `highwayhash/v1.0.5`: based on upstream `v1.0.4`.
+- `sha256-simd/v1.0.2`: based on upstream `v1.0.1`.
+- `simdjson-go/v0.4.6`: based on upstream `v0.4.5`.
+- `sio/v0.5.2`: based on upstream `v0.5.1`.
+- `crc64nvme/v1.1.2`: based on upstream `v1.1.1`.
+- `md5-simd/v1.1.3`: based on upstream `v1.1.2`.
 
-维护者可以另定独立版本序列，但需在首发前统一规则。保留 `simdjson-go`、`sio` 的 `v0` 成熟度声明；迁移仓库和模块路径不构成自动升级为 `v1` 的依据。发行说明应记录本仓库实际改动，不能只写“上游补丁版本”。之后各模块单独按语义版本管理：修复使用 patch，兼容的新 API 使用 minor，稳定模块不兼容的公开 API 或已承诺行为变更使用新的 major。`v2` 及以上还要迁移 module/import 路径为 `/v2` 等后缀，例如 `github.com/soulteary/otterio-kits/crc64nvme/v2`，对应 tag 为 `crc64nvme/v2.0.0`。
+Maintainers may choose independent version sequences, but should settle the convention before first release. Retain the `v0` maturity declaration for `simdjson-go` and `sio`; moving repositories and module paths does not justify an automatic `v1`. Release notes must describe actual repository changes rather than only saying “upstream patch version.” Thereafter each module follows semantic versioning independently: patch for fixes, minor for compatible new APIs, and a new major for incompatible public APIs or promised behavior in stable modules. For `v2` and later, migrate module/import paths to `/v2` or the corresponding suffix, for example `github.com/soulteary/otterio-kits/crc64nvme/v2` with tag `crc64nvme/v2.0.0`.
 
-保留原 package 名，路径中的连字符不成为 Go 标识符。引用示意如下，实际程序只导入使用的包：
+Original package names are retained; hyphens in paths are not Go identifiers. Example imports follow; actual programs should import only the packages they use:
 
 ```go
 import (
@@ -38,15 +38,15 @@ import (
 )
 ```
 
-六个发行库及两个辅助模块的 `go` 声明目前都是 `1.27.2`。这是消费者的最低 Go 要求，不只是 CI 使用的工具链版本；低于该版本的工具链无法在 `GOTOOLCHAIN=local` 下使用这些发行版。发行说明须写明最低版本。后续调整最低版本时，应按影响单独说明。
+The six runtime libraries and two helper modules currently declare `go 1.27.2`. This is the minimum consumer Go requirement, not merely the CI compiler version. Older toolchains cannot use these releases with `GOTOOLCHAIN=local`. State the minimum in release notes and explain the impact of future changes separately.
 
-`md5-simd/_gen` 是汇编生成器，`simdjson-go/benchmarks` 是比较工具，不在本次发行清单中，不给它们创建库发行 tag。benchmarks 的本地 `replace => ../` 用于测量当前父模块；六个发行库不依赖这个替换。Go 的模块下载包排除带有嵌套 `go.mod` 的辅助目录。
+`md5-simd/_gen` is an assembly generator and `simdjson-go/benchmarks` is a comparison tool. They are outside the runtime release list and receive no library release tags. The benchmarks' local `replace => ../` measures the current parent module; runtime libraries do not depend on it. Go module download archives exclude helper directories containing nested `go.mod` files.
 
-## 准备一个候选提交
+## Preparing a candidate commit
 
-以 `crc64nvme` 为例，从已合并的 `main` 提交准备发布。先把代码、依赖、必要的生成文件和该模块的发行说明经 PR 合入主线。确认将使用的完整 SHA 在 `main` 上，不能根据一个通过检查的旧提交给更新后的 `HEAD` 打 tag。
+This example prepares a `crc64nvme` release from a merged `main` commit. First merge code, dependencies, necessary generated files, and module release notes through a PR. Confirm that the full SHA is on `main`; a passing older commit does not justify tagging a newer `HEAD`.
 
-在仓库根目录，使用一个干净的检出创建候选分支，冻结本次检查对象：
+From a clean checkout at the repository root, create a candidate branch to freeze the revision under validation:
 
 ```sh
 git fetch origin main
@@ -62,11 +62,11 @@ git switch --create "$candidate_branch" "$release_commit"
 git show --no-patch --format=fuller "$release_commit"
 ```
 
-分支名和 tag 名中的版本号替换为本次确定的版本；分支已存在时先检查它的 SHA，不能强制覆盖。记录完整 `release_commit`，之后的本地检查、远端 CI、tag 以及发行说明都使用这一提交。候选检查发现问题时，先通过修复 PR 更新 `main`，再选择新的候选提交、创建新的候选分支并重新验证。
+Replace the branch/tag version with the selected release version. If the branch already exists, inspect its SHA rather than force-overwriting it. Record the full `release_commit`; local checks, remote CI, the tag, and release notes must all refer to that commit. If validation finds a problem, merge a fix PR into `main`, select a new candidate commit, create a new candidate branch, and repeat validation.
 
-## 检查独立模块
+## Checking the independent module
 
-根 `go.work` 仅供仓库内联合开发，消费者不会靠它补齐依赖。检查必须关闭工作区；脚本已经设置 `GOWORK=off` 和只读模块模式。对单个候选执行：
+Root `go.work` supports joint repository development; consumers cannot rely on it to fill missing dependencies. Checks must disable the workspace. Scripts already enforce `GOWORK=off` and readonly module metadata. For a single candidate, run:
 
 ```sh
 python3 scripts/verify-upstreams.py
@@ -80,15 +80,15 @@ bash scripts/check-modules.sh noasm "$release_module"
 bash scripts/check-modules.sh cross "$release_module"
 ```
 
-使用与 `go.work` 一致的工具链。`tidy` 模式只检查元数据差异，不能忽略失败后直接发版。`cross` 只编译，不证明目标平台运行正确。`noasm` 只在提供有效便携实现的模块上有相应算法验证含义；`simdjson-go` 的不支持平台实现不能证明解析器正确。原生解析测试需要 Linux amd64 的 AVX2/CLMUL，专用汇编路径的验证应记录实际运行的硬件能力。
+Use the toolchain declared in `go.work`. `tidy` only checks metadata differences; do not release while ignoring its failures. `cross` only compiles and does not prove runtime correctness on the target. `noasm` validates algorithms only where a usable portable implementation exists; simdjson's unsupported-platform stubs do not validate its parser. Native parser tests require AVX2/CLMUL on Linux amd64. Record the hardware capabilities actually exercised for specialized assembly paths.
 
-发布 MD5 生成器相关改动时，额外运行 `bash scripts/check-modules.sh tools md5-simd/_gen`；JSON 基准相关改动使用 `bash scripts/check-modules.sh tools simdjson-go/benchmarks`。选择对应模块的完整 CI 检查结果，包括质量、lint、govulncheck、CodeQL 和 Linux/macOS/Windows 原生测试。涉及平台或汇编变更时再检查扩展平台结果，参考 [CI_TESTS.md](CI_TESTS.md) 与 [CI_SECURITY.md](CI_SECURITY.md)。
+For MD5 generator changes, also run `bash scripts/check-modules.sh tools md5-simd/_gen`; for JSON benchmark changes, run `bash scripts/check-modules.sh tools simdjson-go/benchmarks`. Review the selected module's complete CI results: quality, lint, govulncheck, CodeQL, and native Linux/macOS/Windows tests. Platform or assembly changes also require relevant extended-platform results. See [CI_TESTS.md](CI_TESTS.md) and [CI_SECURITY.md](CI_SECURITY.md).
 
-当前六个发行库之间没有 `require` 依赖。如果今后引入模块间依赖，先发布被依赖的模块，再把依赖方的 `go.mod` 固定到公开版本并验证；不能依靠 `go.work` 或本地 `replace` 发布。
+The six runtime libraries currently have no `require` dependencies on one another. If such dependencies are introduced, release the dependency first, pin its public version in the dependent module's `go.mod`, and validate it. Do not publish relying on `go.work` or a local `replace`.
 
-## 在相同 SHA 手动运行 CI
+## Manually running CI at the same SHA
 
-当前工作流没有正式 tag 的触发规则。发布前手动运行全量检查，不把推送 tag 当成已经运行测试。将候选分支推到指定远端分支，再从它触发检查：
+Current workflows have no formal-tag triggers. Run all checks manually before release; pushing a tag does not imply that tests ran. Push the candidate branch to its explicit remote branch and dispatch checks from it:
 
 ```sh
 git push origin "refs/heads/$candidate_branch:refs/heads/$candidate_branch"
@@ -98,31 +98,31 @@ gh workflow run lint.yml --ref "$candidate_branch"
 gh workflow run security.yml --ref "$candidate_branch"
 ```
 
-这些入口的 `workflow_dispatch` 检查全量模块。平台、汇编或生成器改动需要扩展检查时，再手动运行：
+These `workflow_dispatch` entry points check all modules. When platform, assembly, or generator changes need extended checks, also dispatch:
 
 ```sh
 gh workflow run extended.yml --ref "$candidate_branch"
 ```
 
-`workflow_dispatch` 的 `ref` 使用分支或 tag 名。候选分支让它固定到同一个已合入主线的提交，避免运行期间 `main` 前进导致验证对象改变。查看运行记录：
+The `workflow_dispatch` `ref` is a branch or tag name. A candidate branch pins the same merged commit, avoiding a moving `main` during validation. Inspect runs with:
 
 ```sh
 gh run list --branch "$candidate_branch" --event workflow_dispatch \
   --json databaseId,workflowName,headSha,status,conclusion,url
 ```
 
-逐一核对上述入口的 `headSha` 等于完整 `release_commit`，等待对应运行成功。不能使用别的 SHA 的绿灯，也不能把部分模块检查成功写成全量检查通过。记录各运行 URL 和实际平台；只有当前候选需要的检查完成后才创建正式 tag。覆盖率、fuzz 与性能报告按实际改动选择运行，报告中区分烟测和性能比较。
+For every required workflow, confirm that `headSha` equals the full `release_commit` and wait for success. Passing checks at another SHA do not count, and success for selected modules must not be reported as complete validation. Record each run URL and actual platform. Create the formal tag only after the candidate's required checks finish. Select coverage, fuzzing, and performance reports based on changes, and distinguish smoke tests from performance comparisons.
 
-## 创建并推送一个正式 tag
+## Creating and pushing one formal tag
 
-先确认发行说明和许可待办已经完成，候选提交的检查通过，再检查版本名是否已被占用：
+Complete release notes and license/provenance follow-ups, confirm candidate checks pass, then check whether the version name is occupied:
 
 ```sh
 git ls-remote origin "refs/tags/$release_tag" "refs/tags/$release_tag^{}"
 git show --no-patch "$release_commit"
 ```
 
-如该远端 tag 已存在，核对已有发行记录并选择新的版本，不能覆盖。创建 annotated tag，明确指定已验证 SHA，精确推送这一个 tag：
+If the remote tag exists, inspect its release record and choose a new version; do not overwrite it. Create an annotated tag at the explicit verified SHA and push exactly that tag:
 
 ```sh
 git tag -a "$release_tag" "$release_commit" \
@@ -131,11 +131,11 @@ git push origin "refs/tags/$release_tag:refs/tags/$release_tag"
 git ls-remote origin "refs/tags/$release_tag" "refs/tags/$release_tag^{}"
 ```
 
-第二次查询中 `^{}` 的解引用 SHA 必须等于 `release_commit`。不要使用 `git push --tags`，避免一次发布其他模块或混入 `upstream/*` 来源 tag。来源 tag 单独管理，不作为 Go 模块版本。一个提交可以有几个模块 tag，但每个版本仍需分别核实、推送和记录。
+The dereferenced `^{}` SHA in the second query must equal `release_commit`. Avoid `git push --tags`, which may publish other modules or mix in `upstream/*` provenance tags. Manage provenance tags separately; they are not Go module versions. One commit may have several module tags, but verify, push, and record each version independently.
 
-## 从仓库外验证消费者
+## Verifying a consumer outside the repository
 
-正式 tag 公开后，在工作区之外创建临时 Go 模块，从公共 proxy 下载这一版本。以下只安装和编译单个 CRC 消费者，不运行依赖库自己的测试；库的原生测试结果来自前面的精确提交验证和 CI。
+After the formal tag becomes public, create a temporary Go module outside the workspace and download that version through the public proxy. The following installs and compiles one CRC consumer; it does not run the dependency library's tests. Native library validation comes from the earlier exact-commit checks and CI.
 
 ```sh
 consumer_dir=$(mktemp -d "${TMPDIR:-/tmp}/otterio-kits-consumer.XXXXXX")
@@ -162,9 +162,9 @@ EOF
 )
 ```
 
-使用 Go 1.27.2 或更高工具链；`GOTOOLCHAIN=local` 让最低版本问题直接显现。核对 `go list -m` 的路径与版本、下载输出的来源信息，以及 `Dir`/`Zip` 中该模块的 `LICENSE*` 和 `NOTICE`。公共 proxy 的解析成功也会使版本进入模块索引；如果尚未同步，检查远端 tag、路径和完整 SHA，等待或重试，不要移动 tag。
+Use Go 1.27.2 or later. `GOTOOLCHAIN=local` exposes minimum-version problems directly. Check the path/version from `go list -m`, provenance in download output, and the module's `LICENSE*` and `NOTICE` inside `Dir`/`Zip`. Successful public-proxy resolution also puts the version in the module index. If synchronization is pending, verify the remote tag, path, and full SHA, then wait or retry without moving the tag.
 
-其他五个模块可按对应候选版本安装；以下仅列出独立命令，不要求消费者同时依赖六库：
+The other modules can be installed at their corresponding candidate versions. These are separate commands; consumers need not depend on all six:
 
 ```sh
 go get github.com/soulteary/otterio-kits/highwayhash@v1.0.5
@@ -174,17 +174,17 @@ go get github.com/soulteary/otterio-kits/sio@v0.5.2
 go get github.com/soulteary/otterio-kits/md5-simd@v1.1.3
 ```
 
-各模块发行时为外部消费者编写使用对应 package/API 的编译示例，不能把 CRC 的示例当作其他五库已经验证的证据。JSON 的编译成功不等于 SIMD 解析已在当前 CPU 上运行。
+For each release, write an external consumer example using that module's package/API. The CRC example is not evidence that the other five libraries were verified. Successful JSON compilation does not establish that SIMD parsing ran on the current CPU.
 
-已有一次发布路径验证记录：2026-10-08，在仓库外关闭工作区，通过公共 proxy 下载提交 `0284a7beecea3819a4965c781ccffdf3d0bb0ba5` 的六个模块，解析为 `v0.0.0-20261008011013-0284a7beecea`，使用六个空白 import 的消费者编译通过。六份下载包均保留 `go.mod`、`LICENSE`、`NOTICE` 及适用的 BSD/MIT 许可文件，两个辅助模块不在 runtime 模块下载包中。这证明该提交的模块路径、消费者编译和许可文件打包可用，没有运行依赖库测试，也没有验证未来正式 tag；每次发行仍需按本节对实际版本重新检查。
+An earlier release-path check was performed on 2026-10-08: outside the repository with the workspace disabled, all six modules at commit `0284a7beecea3819a4965c781ccffdf3d0bb0ba5` were downloaded through the public proxy as `v0.0.0-20261008011013-0284a7beecea`. A consumer with six blank imports compiled successfully. All six archives retained `go.mod`, `LICENSE`, `NOTICE`, and applicable BSD/MIT files; the two helper modules were excluded from runtime archives. This validates module resolution, consumer compilation, and license packaging at that commit. It did not run dependency tests or verify future formal tags; repeat these checks for every actual release.
 
-## 发行说明、来源与后续修复
+## Release notes, provenance, and subsequent fixes
 
-Go 版本由 module path、目录前缀 tag 和 tag 指向的代码确定，GitHub Release 用于说明这一版本。先验证已公开 tag，再创建对应 Release；不要让 Release 命令在缺少 tag 时隐式创建一个未验证的 tag。GitHub 自动提供的源码压缩包是该 Git 提交的仓库快照；Go 下载包则按模块目录划分，两者不应混称。
+A Go version is determined by its module path, directory-prefixed tag, and tagged code. GitHub Releases describe that version. Verify the public tag before creating its Release; do not let a Release command implicitly create an unverified tag. GitHub's automatic source archives are full repository snapshots at the Git commit; Go download archives are scoped to individual module directories.
 
-每个模块的发行说明至少记录：模块路径、版本和完整提交 SHA；上游基线与适配补丁；最低 Go 版本；实际通过的 CI 与硬件/平台范围；行为、API、性能和依赖变化；对应的许可材料。参考 [UPSTREAMS.json](../UPSTREAMS.json) 的不可变初次来源与后续维护记录，不用新发行版本覆盖上游基线。
+Each module's release notes should include its module path, version, and full SHA; upstream baseline and adapted patches; minimum Go version; actual successful CI and hardware/platform coverage; behavior, API, performance, and dependency changes; and applicable license materials. Refer to immutable initial provenance and subsequent maintenance records in [UPSTREAMS.json](../UPSTREAMS.json). Do not overwrite the upstream baseline with the new release version.
 
-将已审查的发行说明保存为独立文件，把下面的路径替换为该文件的实际路径，再创建对应 Release：
+Save reviewed release notes in a separate file, substitute its actual path below, and create the corresponding Release:
 
 ```sh
 release_notes_file=/absolute/path/to/crc64nvme-v1.1.2.md
@@ -193,24 +193,24 @@ gh release create "$release_tag" --verify-tag --latest=false \
   --notes-file "$release_notes_file"
 ```
 
-`--verify-tag` 要求 tag 已在远端存在。`--latest=false` 避免把某个组件的版本显示为整仓统一的 Latest；Go 选择模块版本仍依据该模块自己的 tag。发布一个模块只创建它的 Release，不使用整仓自动生成的变更列表作为该模块的完整发行说明。
+`--verify-tag` requires the tag to exist remotely. `--latest=false` prevents one component's version from appearing as a repository-wide Latest release; Go still selects versions by each module's tags. Create only the selected module's Release and do not use a repository-wide autogenerated changelog as its complete release notes.
 
-六个模块的 `LICENSE`、适用的 `LICENSE.Golang` / `LICENSE.Igneous`、`NOTICE` 和原源码署名随各自发行保留。首发准备需处理 [LICENSES.md 的已记录来源待办](LICENSES.md#尚需进一步追溯的来源)：`sha256-simd` 的 Intel AVX512 和 jocover ARM64 实现尚待追溯精确历史授权链。该待办按 SHA 模块处理，其他模块按各自材料和验证状态决定发行。
+Each module retains its LICENSE, applicable `LICENSE.Golang` / `LICENSE.Igneous`, NOTICE, and original source attribution. First-release preparation must address [outstanding provenance checks](LICENSES.md#outstanding-provenance-checks): the precise historical authorization chain for SHA's Intel AVX512 and jocover ARM64 implementations still needs verification. Handle this follow-up for the SHA module; decide other modules' readiness from their own materials and validation.
 
-公开 tag 不再删除、强制移动或覆盖。发现错误时创建新的 patch 版本；若旧版本不应再被选择，在该模块新的版本中用 `retract` 指令说明原因并发布。旧 tag 与源码继续保留，使已有依赖可复现。`retract` 不会删除已下载版本，也不能替代修复版本。
+Never delete, force-move, or overwrite public tags. Publish a new patch version for corrections. If an older version should no longer be selected, explain it with `retract` in a new module version and publish that version. Retain old tags/source for reproducibility. `retract` neither deletes downloaded versions nor substitutes for a fixed release.
 
-候选分支在记录 CI 链接、正式 tag 与 Release 后可保留，或由维护者确认不再需要时清理。清理候选分支不改变已发布 tag。
+After recording CI links, the formal tag, and the Release, retain candidate branches or remove them when maintainers confirm they are no longer needed. Removing a candidate branch does not affect its published tag.
 
-最后在 otterIO / OC 另开依赖迁移 PR：显式引用需要切换 import 路径和版本；SDK 的转递依赖需在独立 `otterio-go` fork 中迁移。只发布 kits tag 不会自动替换产品里的 `github.com/minio/*`。产品的磁盘校验、存量密文和 JSON 数据兼容性应在产品回归中另行验证。
+Finally, prepare separate dependency-migration PRs for otterIO / OC that explicitly change import paths and versions. Migrate SDK transitive dependencies in the independent `otterio-go` fork. Publishing kits tags does not automatically replace product `github.com/minio/*` dependencies. Run product regressions separately for disk checksums, existing ciphertext, and JSON data compatibility.
 
-## 官方规则
+## Official rules
 
-- [Go 多模块仓库](https://go.dev/doc/modules/managing-source)：子目录模块、tag 前缀和消费者版本。
-- [Go 模块版本号](https://go.dev/doc/modules/version-numbers)：稳定性声明与语义版本。
-- [Go 发布步骤](https://go.dev/doc/modules/publishing)：公开 tag、proxy 索引与不可变版本。
-- [Go 工作区](https://go.dev/ref/mod#workspaces)：避免工作区掩盖独立依赖的问题。
-- [Go 最低版本声明](https://go.dev/ref/mod#go-mod-file-go)：`go` 指令的最低工具链要求。
-- [Go 模块下载包](https://go.dev/ref/mod#zip-files)：子目录范围、嵌套模块排除等规则。
-- [Go retract 指令](https://go.dev/ref/mod#go-mod-file-retract)：保留旧版本同时撤回推荐。
-- [GitHub 手动运行工作流](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/manually-running-a-workflow)：`workflow_dispatch` 与分支选择。
-- [GitHub CLI 创建 Release](https://cli.github.com/manual/gh_release_create)：`--verify-tag`、发行说明文件与 Latest 标记。
+- [Go multi-module repositories](https://go.dev/doc/modules/managing-source): subdirectory modules, tag prefixes, and consumer versions.
+- [Go version numbers](https://go.dev/doc/modules/version-numbers): stability declarations and semantic versions.
+- [Publishing Go modules](https://go.dev/doc/modules/publishing): public tags, proxy indexing, and immutable versions.
+- [Go workspaces](https://go.dev/ref/mod#workspaces): avoiding hidden independent-dependency problems.
+- [Go minimum-version directives](https://go.dev/ref/mod#go-mod-file-go): minimum toolchain requirements.
+- [Go module archives](https://go.dev/ref/mod#zip-files): subdirectory scope and nested-module exclusion.
+- [Go retract directives](https://go.dev/ref/mod#go-mod-file-retract): withdrawing recommendations while retaining versions.
+- [Manually running GitHub workflows](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/manually-running-a-workflow): `workflow_dispatch` and branch selection.
+- [GitHub CLI release creation](https://cli.github.com/manual/gh_release_create): `--verify-tag`, release-note files, and Latest flags.
