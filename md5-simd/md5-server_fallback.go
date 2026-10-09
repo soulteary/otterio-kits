@@ -11,3 +11,7 @@ package md5simd
 func NewServer() *fallbackServer {
 	return &fallbackServer{}
 }
+
+func NewServerWithOptions(opts ServerOptions) *fallbackServer {
+	return &fallbackServer{}
+}

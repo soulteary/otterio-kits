@@ -5,6 +5,7 @@ package main
 //go:generate gofmt -w ../md5block_amd64.go
 
 import (
+	"github.com/mmcloughlin/avo/attr"
 	x "github.com/mmcloughlin/avo/build"
 	"github.com/mmcloughlin/avo/buildtags"
 	o "github.com/mmcloughlin/avo/operand"
@@ -38,12 +39,14 @@ func ROLL(imm int, gpr reg.GPVirtual) {
 // INTEL:
 // Inst  166 X86   : NOT r32                       L:   0.45ns=  1.0c  T:   0.11ns=  0.25c
 // Inst  154 X86   : XOR r32, r32                  L:   0.11ns=  0.2c  T:   0.11ns=  0.25c
-func NOTL(gpr, ones reg.GPVirtual) {
+func NOTL(gpr, ones reg.GPVirtual) reg.GPVirtual {
 	// Use XOR
 	if false {
 		x.NOTL(gpr)
+		return gpr
 	} else {
 		x.XORL(ones, gpr)
+		return gpr
 	}
 }
 
@@ -51,7 +54,7 @@ func main() {
 	x.Constraint(buildtags.Not("appengine").ToConstraint())
 	x.Constraint(buildtags.Not("noasm").ToConstraint())
 	x.Constraint(buildtags.Term("gc").ToConstraint())
-	x.TEXT("blockScalar", 0, "func(dig *[4]uint32, p []byte)")
+	x.TEXT("blockScalar", attr.NOSPLIT, "func(dig *[4]uint32, p []byte)")
 	x.Doc("Encode p to digest.", "Modified by otterIO contributors in 2026: regenerated with the maintained Avo toolchain.")
 	x.Comment("Modified by otterIO contributors in 2026: regenerate without clobbering BP.")
 	x.Pragma("noescape")
@@ -107,8 +110,15 @@ func main() {
 			x.MOVL(o.Mem{Base: src, Disp: idx * 4}, dst)
 		}
 	}
+	// Use LEA for summing, generally slower.
 	const useLEA = false
-	loadSrc(0, R8)
+
+	// load directly into ADD instead of preloading, generally slower.
+	const useLoadAdd = false && !useLEA
+	if !useLoadAdd {
+		loadSrc(0, R8)
+	}
+	var nextIdx int
 	x.MOVL(DX, R9)
 
 	// Copy digest
@@ -126,11 +136,19 @@ func main() {
 			x.LEAL(o.Mem{Base: a, Disp: con, Index: R8, Scale: 1}, a)
 		} else {
 			x.ADDL(o.U32(con), a)
-			x.ADDL(R8, a)
+			if useLoadAdd {
+				x.ADDL(o.Mem{Base: src, Disp: nextIdx * 4}, a)
+			} else {
+				x.ADDL(R8, a)
+			}
 		}
 		x.ANDL(b, R9)
 		x.XORL(d, R9)
-		loadSrc(index, R8)
+		if useLoadAdd {
+			nextIdx = index
+		} else {
+			loadSrc(index, R8)
+		}
 		x.ADDL(R9, a)
 		ROLL(shift, a)
 		x.MOVL(c, R9)
@@ -166,15 +184,25 @@ func main() {
 			x.LEAL(o.Mem{Base: a, Disp: con, Index: R8, Scale: 1}, a)
 		} else {
 			x.ADDL(o.U32(con), a)
-			x.ADDL(R8, a)
+			if useLoadAdd {
+				x.ADDL(o.Mem{Base: src, Disp: nextIdx * 4}, a)
+			} else {
+				x.ADDL(R8, a)
+			}
 		}
 
-		x.ANDL(b, R10)
-		x.ANDL(c, R9)
-		loadSrc(index, R8)
-		x.ORL(R9, R10)
-		x.MOVL(c, R9)
+		// Uses https://github.com/animetosho/md5-optimisation#dependency-shortcut-in-g-function
+		x.ANDL(b, R10) // (d & b)
+		x.ANDL(c, R9)  // = ~d & c
+		if useLoadAdd {
+			nextIdx = index
+		} else {
+			loadSrc(index, R8)
+		}
+
+		x.ADDL(R9, a)
 		x.ADDL(R10, a)
+		x.MOVL(c, R9)
 		x.MOVL(c, R10)
 		ROLL(shift, a)
 		x.ADDL(b, a)
@@ -198,22 +226,38 @@ func main() {
 	ROUND2(BX, CX, DX, AX, 5, 0x8d2a4c8a, 20)
 
 	x.Comment("ROUND3")
-	x.MOVL(CX, R9)
+	first := true
 	ROUND3 := func(a, b, c, d reg.GPVirtual, index, con, shift int) {
+		// Use https://github.com/animetosho/md5-optimisation#h-function-re-use
+		if first {
+			x.MOVL(d, R9)
+			x.XORL(c, R9)
+			x.XORL(b, R9)
+			first = false
+		} else {
+			x.XORL(a, R9)
+			x.XORL(b, R9)
+		}
+
 		// LEAL const(a)(R8*1), a; \
 		if useLEA {
 			x.LEAL(o.Mem{Base: a, Disp: con, Index: R8, Scale: 1}, a)
 		} else {
 			x.ADDL(o.U32(con), a)
-			x.ADDL(R8, a)
+			if useLoadAdd {
+				x.ADDL(o.Mem{Base: src, Disp: nextIdx * 4}, a)
+			} else {
+				x.ADDL(R8, a)
+			}
 		}
-		loadSrc(index, R8)
+		if useLoadAdd {
+			nextIdx = index
+		} else {
+			loadSrc(index, R8)
+		}
 
-		x.XORL(d, R9)
-		x.XORL(b, R9)
 		x.ADDL(R9, a)
 		ROLL(shift, a)
-		x.MOVL(b, R9)
 		x.ADDL(b, a)
 	}
 
@@ -244,12 +288,20 @@ func main() {
 			x.LEAL(o.Mem{Base: a, Disp: con, Index: R8, Scale: 1}, a)
 		} else {
 			x.ADDL(o.U32(con), a)
-			x.ADDL(R8, a)
+			if useLoadAdd {
+				x.ADDL(o.Mem{Base: src, Disp: nextIdx * 4}, a)
+			} else {
+				x.ADDL(R8, a)
+			}
 		}
 		x.ORL(b, R9)
 		x.XORL(c, R9)
 		x.ADDL(R9, a)
-		loadSrc(index, R8)
+		if useLoadAdd {
+			nextIdx = index
+		} else {
+			loadSrc(index, R8)
+		}
 		if index >= 0 {
 			x.MOVL(ones, R9)
 		}

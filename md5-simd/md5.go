@@ -22,6 +22,10 @@ type Server interface {
 	Close()
 }
 
+type ServerOptions struct {
+	UseAVX512 bool
+}
+
 type Hasher interface {
 	hash.Hash
 	Close()
@@ -30,7 +34,7 @@ type Hasher interface {
 // StdlibHasher returns a Hasher that uses the stdlib for hashing.
 // Used hashers are stored in a pool for fast reuse.
 func StdlibHasher() Hasher {
-	return &md5Wrapper{Hash: md5Pool.New().(hash.Hash)}
+	return &md5Wrapper{Hash: md5Pool.Get().(hash.Hash)}
 }
 
 // md5Wrapper is a wrapper around the builtin hasher.
@@ -48,7 +52,7 @@ type fallbackServer struct {
 
 // NewHash -- return regular Golang md5 hashing from crypto
 func (s *fallbackServer) NewHash() Hasher {
-	return &md5Wrapper{Hash: md5Pool.New().(hash.Hash)}
+	return &md5Wrapper{Hash: md5Pool.Get().(hash.Hash)}
 }
 
 func (s *fallbackServer) Close() {
