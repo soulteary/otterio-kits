@@ -4,6 +4,7 @@
 // Copyright (c) 2020 MinIO Inc. All rights reserved.
 // Use of this source code is governed by a license that can be
 // found in the LICENSE file.
+// Modified by otterIO contributors in 2026: wake buffer waits and closed clients.
 
 package md5simd
 
@@ -17,6 +18,7 @@ import (
 
 // md5Digest - Type for computing MD5 using either AVX2 or AVX512
 type md5Digest struct {
+	serverDone  <-chan struct{}
 	uid         uint64
 	blocksCh    chan blockInput
 	cycleServer chan uint64
@@ -35,6 +37,7 @@ func (s *md5Server) NewHash() Hasher {
 		input: blockCh,
 	}
 	return &md5Digest{
+		serverDone:  s.done,
 		uid:         uid,
 		buffers:     s.buffers,
 		blocksCh:    blockCh,
@@ -94,7 +97,7 @@ func (d *md5Digest) write(p []byte) (nn int, err error) {
 		if d.nx == BlockSize {
 			// Create a copy of the overflow buffer in order to send it async over the channel
 			// (since we will modify the overflow buffer down below with any access beyond multiples of 64)
-			tmp := <-d.buffers
+			tmp := d.acquireBuffer()
 			tmp = tmp[:BlockSize]
 			copy(tmp, d.x[:])
 			d.sendBlock(blockInput{uid: d.uid, msg: tmp}, len(p)-n < BlockSize)
@@ -104,7 +107,7 @@ func (d *md5Digest) write(p []byte) (nn int, err error) {
 	}
 	if len(p) >= BlockSize {
 		n := len(p) &^ (BlockSize - 1)
-		buf := <-d.buffers
+		buf := d.acquireBuffer()
 		buf = buf[:n]
 		copy(buf, p)
 		d.sendBlock(blockInput{uid: d.uid, msg: buf}, len(p)-n < BlockSize)
@@ -120,6 +123,12 @@ func (d *md5Digest) Close() {
 	if d.blocksCh != nil {
 		close(d.blocksCh)
 		d.blocksCh = nil
+		// An idle server must wake up to release this client's state.
+		// Do not wait for a notification after the server has exited.
+		select {
+		case d.cycleServer <- d.uid:
+		case <-d.serverDone:
+		}
 	}
 }
 
@@ -137,7 +146,7 @@ func (d *md5Digest) Sum(in []byte) (result []byte) {
 		panic("sum after close")
 	}
 
-	trail := <-d.buffers
+	trail := d.acquireBuffer()
 	trail = append(trail[:0], d.x[:d.nx]...)
 
 	length := d.len
@@ -165,6 +174,19 @@ func (d *md5Digest) Sum(in []byte) (result []byte) {
 	sumChPool.Put(sumCh)
 
 	return append(in, sum.digest[:]...)
+}
+
+// acquireBuffer wakes the server before waiting on an exhausted shared pool.
+// Otherwise writers can hold all buffers in partially filled input channels
+// while the server waits for a cycle notification that none of them can send.
+func (d *md5Digest) acquireBuffer() []byte {
+	select {
+	case buf := <-d.buffers:
+		return buf
+	default:
+		d.cycleServer <- d.uid
+		return <-d.buffers
+	}
 }
 
 // sendBlock will send a block for processing.

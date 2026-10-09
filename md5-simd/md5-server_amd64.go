@@ -4,6 +4,7 @@
 // Copyright (c) 2020 MinIO Inc. All rights reserved.
 // Use of this source code is governed by a license that can be
 // found in the LICENSE file.
+// Modified by otterIO contributors in 2026: track server exit and release client state.
 
 package md5simd
 
@@ -52,6 +53,7 @@ type lanesInfo [Lanes]blockInput
 
 // md5Server - Type to implement parallel handling of MD5 invocations
 type md5Server struct {
+	done         chan struct{} // Closed when the processing goroutine exits.
 	options      ServerOptions
 	uidCounter   uint64
 	cycle        chan uint64           // client with uid has update.
@@ -79,7 +81,11 @@ func NewServerWithOptions(opts ServerOptions) Server {
 	if !cpuid.CPU.Supports(cpuid.AVX2) {
 		return &fallbackServer{}
 	}
-	md5srv := &md5Server{}
+	return newMD5Server(opts)
+}
+
+func newMD5Server(opts ServerOptions) *md5Server {
+	md5srv := &md5Server{done: make(chan struct{})}
 	md5srv.options = opts
 	md5srv.digests = make(map[uint64][Size]byte)
 	md5srv.newInput = make(chan newClient, Lanes)
@@ -105,6 +111,7 @@ type newClient struct {
 
 // process - Sole handler for reading from the input channel.
 func (s *md5Server) process(newClients chan newClient) {
+	defer close(s.done)
 	// To fill up as many lanes as possible:
 	//
 	// 1. Wait for a cycle id.
@@ -143,6 +150,7 @@ func (s *md5Server) process(newClients chan newClient) {
 				if !ok {
 					// Client disconnected
 					delete(clients, uid)
+					delete(s.digests, uid)
 					return
 				}
 				if block.uid != uid {

@@ -406,6 +406,37 @@
         "sha256-simd/sha256block_arm64.go",
         "sha256-simd/sha256block_other.go"
       ]
+    },
+    {
+      "date": "2026-10-09",
+      "kind": "md5-server-lifecycle",
+      "go_version": "1.27.2",
+      "issue": "https://github.com/minio/md5-simd/issues/35",
+      "description": "Release closed client digest state, wake the scheduler before waiting for shared buffers, and notify client closure without blocking after server exit. Preserve public APIs and MD5 arithmetic. Extract internal server initialization to run single-lane scheduler regressions on amd64 without AVX2.",
+      "local_source_changes": [
+        "md5-simd/md5-digest_amd64.go",
+        "md5-simd/md5-server_amd64.go"
+      ],
+      "local_test_changes": [
+        "md5-simd/md5-lifecycle_amd64_test.go"
+      ],
+      "validation": {
+        "passed": [
+          "darwin/arm64 full race suite",
+          "darwin/arm64 noasm suite",
+          "darwin/amd64 via Rosetta full race suite",
+          "real scalar scheduler cleanup, buffer exhaustion and close-order regressions repeated 20 times, including race",
+          "unfixed control retained 1000 digest entries and stalled all three buffer acquisition paths",
+          "linux/amd64 go vet",
+          "Linux and Windows amd64 test-binary compilation",
+          "go mod tidy -diff",
+          "Go formatting and original upstream history checks"
+        ],
+        "limitations": [
+          "Rosetta does not expose AVX2; concurrent AVX2/AVX512 lifecycle cases skipped",
+          "Native AVX2/AVX512 hardware validation and performance comparisons remain required"
+        ]
+      }
     }
   ]
 }
