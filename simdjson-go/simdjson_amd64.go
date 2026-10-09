@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+// Modified by otterIO contributors in 2026: retain the ParseND parser for reuse.
 package simdjson
 
 import (
@@ -88,7 +89,9 @@ func ParseND(b []byte, reuse *ParsedJson, opts ...ParserOption) (*ParsedJson, er
 	if err != nil {
 		return nil, err
 	}
-	return &pj.ParsedJson, nil
+	parsed := &pj.ParsedJson
+	parsed.internal = pj
+	return parsed, nil
 }
 
 // A Stream is used to stream back results.
