@@ -200,7 +200,42 @@
         "recorded_at_commit": "31f7ef570b3afcc750e85dcf0211885f89dfb4c8"
       },
       "upstream_patches": [],
-      "updates": []
+      "updates": [
+        {
+          "date": "2026-10-09",
+          "upstream_commit": "9079a80574c436bba1a228224160e66ff2d7bf4e",
+          "merge_commit": "5bca8fd17defa7deb5078a9bfbc1834f3bd73327",
+          "method": "subtree merge without squash",
+          "upstream_commits_added": 9,
+          "local_adaptations": [
+            "Retain otterio-kits module paths, Go 1.27.2 and maintained dependencies",
+            "Combine upstream NOSPLIT generator changes with local Avo regeneration and BP preservation",
+            "Keep root CI; omit upstream nested workflows",
+            "Add server options, Reset/Close and hasher reuse regression coverage"
+          ],
+          "validation": {
+            "toolchain": "go1.27.2",
+            "native_platform": "darwin/arm64",
+            "passed": [
+              "module tests",
+              "race tests",
+              "noasm tests",
+              "go vet",
+              "go mod tidy -diff",
+              "assembly generator and generated assembly compilation",
+              "linux/amd64 test binary compilation",
+              "windows/amd64 test binary compilation",
+              "SDK short race suite with temporary local MD5 replacement",
+              "original upstream history/import verification",
+              "target upstream commit ancestry"
+            ],
+            "limitations": [
+              "AVX2/AVX512 paths were compiled but not executed on this ARM64 host",
+              "Live S3 server integration tests and remote CI were not run"
+            ]
+          }
+        }
+      ]
     }
   ],
   "auxiliary_modules": [

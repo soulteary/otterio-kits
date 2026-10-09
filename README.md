@@ -11,7 +11,7 @@ The libraries were imported from fixed upstream versions with their original Git
 - [`simdjson-go`](simdjson-go/README.md): SIMD JSON parsing, imported from `minio/simdjson-go v0.4.5`.
 - [`sio`](sio/README.md): DARE streaming encryption, imported from `minio/sio v0.5.1`.
 - [`crc64nvme`](crc64nvme/README.md): CRC-64/NVME, imported from `minio/crc64nvme v1.1.1`.
-- [`md5-simd`](md5-simd/README.md): parallel MD5, imported from `minio/md5-simd v1.1.2`.
+- [`md5-simd`](md5-simd/README.md): parallel MD5, initially imported from `minio/md5-simd v1.1.2` and updated through upstream commit `9079a805` (2025-04-02, unreleased master changes).
 
 Module paths use `github.com/soulteary/otterio-kits/<directory>`. Original package names and public APIs are retained; consumers must explicitly migrate their imports. The initial import did not change otterIO or OC dependencies.
 
