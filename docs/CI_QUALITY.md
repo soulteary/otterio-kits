@@ -8,6 +8,8 @@ Full vet on Linux AMD64 then found that old generated assembly wrote to BP as a 
 
 Full vet also found two existing issues. simdjson's `AsInteger` used an argument-free append when converting a uint to int64, omitting the return value. A regression test requiring no SIMD covers 0, 42, maximum int64, and overflow rejection. SHA AVX512 test workers now use `Errorf` and defer `wg.Done`, avoiding `Fatalf` from a child goroutine.
 
+On 2026-10-09, simdjson received two targeted upstream backports beyond its v0.4.5 import baseline: `cac9cd14dd098e3abde93f5056dab89c8690c932` (#92), which continues filtered `Object.ForEach` traversal after skipping an unselected value, and `1a32809` (#89), which corrects the expected-type error from `Iter.Array`. The upstream filtering regression tests were retained. Additional direct-tape tests verify skipped fields, missing keys, and the array error without requiring SIMD. These backports do not constitute a full master-branch update; the initial provenance in `UPSTREAMS.json` remains unchanged.
+
 ```sh
 python3 scripts/check-quality.py format md5-simd
 python3 scripts/check-quality.py vet sha256-simd

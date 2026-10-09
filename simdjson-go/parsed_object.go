@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Modified by otterIO contributors in 2026: backport upstream filtered traversal fix (#92).
 package simdjson
 
 import (
@@ -169,6 +170,7 @@ func (o *Object) ForEach(fn func(key []byte, i Iter), onlyKeys map[string]struct
 				if t == TypeNone {
 					return nil
 				}
+				continue
 			}
 		}
 
