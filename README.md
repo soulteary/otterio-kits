@@ -1,8 +1,31 @@
+<div align="center">
+
+[![otterio-kits — Core Go Libraries](./.github/otterio-kits-banner-v2.png)](https://github.com/soulteary/otterio-kits)
+
 # otterio-kits
 
-A multi-module repository for the core Go libraries used by otterIO and OC, independently maintained by OtterIO. Each of the six libraries keeps its own `go.mod`, tests, license materials, and release versions.
+**Core Go Libraries** — _Hashing, JSON parsing, and streaming encryption._
 
-The libraries were imported from fixed upstream versions with their original Git history. Release procedures and candidate versions are documented separately; version examples do not indicate published releases. The `minio-go/v7` SDK fork is maintained in a separate repository.
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
+[![Go](https://img.shields.io/badge/Go-1.27.2-00ADD8.svg?logo=go&logoColor=white)](./go.work)
+[![GitHub](https://img.shields.io/badge/GitHub-soulteary%2Fotterio--kits-181717.svg?logo=github)](https://github.com/soulteary/otterio-kits)
+
+</div>
+
+otterio-kits is a collection of six core Go libraries for hashing, checksums, SIMD JSON parsing, and streaming encryption, independently maintained by OtterIO. It brings together the libraries used by [OtterIO](https://github.com/soulteary/otterio) and [OC](https://github.com/soulteary/oc), with a separate `go.mod`, tests, license materials, and release versions for each library.
+
+This README introduces the libraries and their development workflow. The [documentation index](./docs/README.md) links maintenance, CI, release, and provenance guides; the [OtterIO SDK](https://github.com/soulteary/otterio-sdk), a fork of `minio-go/v7`, is maintained in a separate repository.
+
+> [!IMPORTANT]
+> otterio-kits is an independent, community-maintained collection of upstream Go libraries. It is **not** affiliated with, endorsed by, or sponsored by MinIO, Inc. Original copyright notices and applicable license materials are retained; see [licenses and provenance](./docs/LICENSES.md) and [UPSTREAMS.json](./UPSTREAMS.json).
+
+---
+
+## What is otterio-kits
+
+otterio-kits is a multi-module repository: each library can be imported and released independently, while the root Go workspace supports joint local development. Original package names and public APIs are retained; consumers must explicitly migrate their imports to `github.com/soulteary/otterio-kits/<directory>`.
+
+The libraries were imported from fixed upstream versions with their original Git history. Release procedures and candidate versions are documented separately; version examples do not indicate published releases.
 
 ## Libraries
 
