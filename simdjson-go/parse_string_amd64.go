@@ -17,10 +17,11 @@
  * limitations under the License.
  */
 
+// Modified by otterIO contributors in 2026: correct scan bounds and publish grown string buffers.
 package simdjson
 
 import (
-	"reflect"
+	"slices"
 	"unsafe"
 )
 
@@ -35,7 +36,7 @@ func parseStringSimdValidateOnly(buf []byte, maxStringSize, dstLength *uint64, n
 	src := unsafe.Pointer(&buf[1]) // Use buf[1] in order to skip opening quote
 	src_length := uint64(0)
 
-	success := _parse_string_validate_only(src, unsafe.Pointer(&maxStringSize), unsafe.Pointer(&src_length), unsafe.Pointer(dstLength))
+	success := _parse_string_validate_only(src, unsafe.Pointer(maxStringSize), unsafe.Pointer(&src_length), unsafe.Pointer(dstLength))
 
 	*needCopy = *needCopy || src_length != *dstLength
 	return success != 0
@@ -43,17 +44,22 @@ func parseStringSimdValidateOnly(buf []byte, maxStringSize, dstLength *uint64, n
 
 func parseStringSimd(buf []byte, stringbuf *[]byte) bool {
 
-	sh := (*reflect.SliceHeader)(unsafe.Pointer(stringbuf))
+	// The caller reserves decoded length plus SIMD store padding. If there is
+	// no writable capacity, grow and publish the backing array before writing.
+	start := len(*stringbuf)
 	sb := *stringbuf
-	sb = append(sb, 0)
+	if cap(sb) == start {
+		sb = slices.Grow(sb, len(buf)+32)
+		*stringbuf = sb
+	}
+	sb = sb[:cap(sb)]
 
-	src := unsafe.Pointer(&buf[1]) // Use buf[1] in order to skip opening quote
-	string_buf_loc := unsafe.Pointer(uintptr(unsafe.Pointer(&sb[0])) + uintptr(sh.Len)*unsafe.Sizeof(sb[0]))
-	dst := string_buf_loc
-
-	res := _parse_string(src, dst, unsafe.Pointer(&string_buf_loc))
-
-	sh.Len += int(uintptr(string_buf_loc) - uintptr(dst))
+	src := unsafe.Pointer(&buf[1]) // Skip the opening quote.
+	dst := unsafe.Pointer(&sb[start])
+	stringBufLoc := dst
+	res := _parse_string(src, dst, unsafe.Pointer(&stringBufLoc))
+	written := int(uintptr(stringBufLoc) - uintptr(dst))
+	*stringbuf = sb[:start+written]
 
 	return res != 0
 }

@@ -1,4 +1,7 @@
-//+build !noasm !appengine gc
+//go:build !noasm && !appengine && gc
+// +build !noasm,!appengine,gc
+
+// Modified by otterIO contributors in 2026: exclude assembly from noasm and appengine builds.
 
 #define MASK    AX
 #define INDEX   BX

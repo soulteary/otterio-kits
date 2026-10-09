@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Modified by otterIO contributors in 2026: reuse exactly-sized tag buffers.
 package simdjson
 
 import (
@@ -256,7 +257,7 @@ func (s *Serializer) Serialize(dst []byte, pj ParsedJson) []byte {
 	valWr, valDone := encBlock(s.compValues, s.valuesCompBuf, s.fasterComp)
 	tagWr, tagDone := encBlock(s.compTags, s.tagsCompBuf, s.fasterComp)
 	// Pessimistically allocate for maximum possible size.
-	if cap(s.tagsBuf) <= tagBufSize {
+	if cap(s.tagsBuf) < tagBufSize {
 		s.tagsBuf = make([]byte, tagBufSize)
 	}
 	s.tagsBuf = s.tagsBuf[:tagBufSize]

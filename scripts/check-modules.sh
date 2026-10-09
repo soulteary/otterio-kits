@@ -255,6 +255,13 @@ run_module() {
             ;;
           simdjson-go)
             echo "Upstream noasm tests validate unsupported-platform stubs, not a parser fallback."
+            for excluded_tag in noasm appengine; do
+              selected_assembly=$(GOARCH=amd64 go list -tags="$excluded_tag" -f '{{join .SFiles " "}}' .)
+              if [[ -n "$selected_assembly" ]]; then
+                echo "$excluded_tag unexpectedly selects assembly: $selected_assembly" >&2
+                exit 1
+              fi
+            done
             go test -tags=noasm -count=1 -timeout="$test_timeout" ./...
             ;;
           sio)
