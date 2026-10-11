@@ -1,15 +1,15 @@
-> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/sha256-simd`, based on MinIO `sha256-simd` `v1.0.1`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
+> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/sha256-simd`, based on MinIO `sha256-simd` `v1.0.1`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. Published versions are tracked by directory-prefixed module tags. See the [repository maintenance guide](../docs/MAINTENANCE.md).
 
 # sha256-simd
 
-Accelerate SHA256 computations in pure Go using AVX512, SHA Extensions for x86 and ARM64 for ARM.
+SHA256 with Intel SHA Extensions and AVX512 backends on amd64, and Go standard-library acceleration on ARM64.
 On AVX512 it provides an up to 8x improvement (over 3 GB/s per core).
 SHA Extensions give a performance boost of close to 4x over native.
 
 ## Introduction
 
 This package is designed as a replacement for `crypto/sha256`.
-For ARM CPUs with the Cryptography Extensions, advantage is taken of the SHA2 instructions resulting in a massive performance improvement.
+On ARM64, `New()` and `Sum256()` delegate to `crypto/sha256`; the Go toolchain handles SHA2 feature detection and acceleration.
 
 This package uses Golang assembly.
 The AVX512 version is based on the Intel's "multi-buffer crypto library for IPSec" whereas the other Intel implementations are described in "Fast SHA-256 Implementations on Intel Architecture Processors" by J. Guilford et al.
@@ -100,39 +100,15 @@ One of the most performance sensitive parts of the [Minio](https://github.com/mi
 
 Other applications that can benefit from enhanced SHA256 performance are deduplication in storage systems, intrusion detection, version control systems, integrity checking, etc.
 
-## ARM SHA Extensions
+## ARM64 implementation
 
-The 64-bit ARMv8 core has introduced new instructions for SHA1 and SHA2 acceleration as part of the [Cryptography Extensions](http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.ddi0501f/CHDFJBCJ.html). Below you can see a small excerpt highlighting one of the rounds as is done for the SHA256 calculation process (for full code see [sha256block_arm64.s](https://github.com/soulteary/otterio-kits/blob/main/sha256-simd/sha256block_arm64.s)).
+`New()` and `Sum256()` use Go `crypto/sha256` on ARM64. Go 1.27.2 supplies its own SHA2 hardware acceleration and portable fallback. The former jocover-derived assembly and its wrapper have been removed, rather than merely disabled, so they are absent from new module source archives. See [provenance and compatibility](PROVENANCE.md).
 
- ```
- sha256h    q2, q3, v9.4s
- sha256h2   q3, q4, v9.4s
- sha256su0  v5.4s, v6.4s
- rev32      v8.16b, v8.16b
- add        v9.4s, v7.4s, v18.4s
- mov        v4.16b, v2.16b
- sha256h    q2, q3, v10.4s
- sha256h2   q3, q4, v10.4s
- sha256su0  v6.4s, v7.4s
- sha256su1  v5.4s, v7.4s, v8.4s
- ```
-
-### Detailed benchmarks
-
-Benchmarks generated on a 1.2 Ghz Quad-Core ARM Cortex A53 equipped [Pine64](https://www.pine64.com/).
-
-```
-minio@minio-arm:$ benchcmp golang.txt arm64.txt
-benchmark                 golang         arm64        speedup
-BenchmarkHash8Bytes-4     0.68 MB/s      5.70 MB/s      8.38x
-BenchmarkHash1K-4         5.65 MB/s    326.30 MB/s     57.75x
-BenchmarkHash8K-4         6.00 MB/s    570.63 MB/s     95.11x
-BenchmarkHash1M-4         6.05 MB/s    638.23 MB/s    105.49x
-```
+Upstream benchmark figures elsewhere in this README are historical results, not measurements of this ARM64 implementation.
 
 ## License
 
-Released under the Apache License v2.0. You can find the complete text in the file LICENSE.
+Primary license: Apache-2.0, see LICENSE. Retained Go Authors code is covered by LICENSE.Golang; Intel-derived AVX512 code is also subject to LICENSE.Intel (BSD-3-Clause). Preserve NOTICE and all applicable license files in distributions.
 
 ## Contributing
 

@@ -1,3 +1,4 @@
+// Modified by otterio-kits maintainers on 2026-10-11: remove the inherited ARM64 backend and use Go crypto/sha256.
 /*
  * Minio Cloud Storage, (C) 2016 Minio, Inc.
  *
@@ -21,6 +22,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"hash"
+	"runtime"
 )
 
 // Size - The size of a SHA256 checksum in bytes.
@@ -68,7 +70,6 @@ type blockfuncType int
 const (
 	blockfuncStdlib blockfuncType = iota
 	blockfuncIntelSha
-	blockfuncArmSha2
 	blockfuncForceGeneric = -1
 )
 
@@ -78,8 +79,6 @@ func init() {
 	switch {
 	case hasIntelSha:
 		blockfunc = blockfuncIntelSha
-	case hasArmSha2():
-		blockfunc = blockfuncArmSha2
 	}
 }
 
@@ -98,6 +97,10 @@ func New() hash.Hash {
 
 // Sum256 - single caller sha256 helper
 func Sum256(data []byte) (result [Size]byte) {
+	// ARM64 acceleration and CPU detection are maintained by the Go toolchain.
+	if runtime.GOARCH == "arm64" && blockfunc != blockfuncForceGeneric {
+		return sha256.Sum256(data)
+	}
 	var d digest
 	d.Reset()
 	d.Write(data)
@@ -264,8 +267,6 @@ func (d *digest) checkSum() (digest [Size]byte) {
 func block(dig *digest, p []byte) {
 	if blockfunc == blockfuncIntelSha {
 		blockIntelShaGo(dig, p)
-	} else if blockfunc == blockfuncArmSha2 {
-		blockArmSha2Go(dig, p)
 	} else {
 		blockGeneric(dig, p)
 	}

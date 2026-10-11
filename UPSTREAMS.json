@@ -52,7 +52,8 @@
       },
       "licenses": [
         "LICENSE",
-        "LICENSE.Golang"
+        "LICENSE.Golang",
+        "LICENSE.Intel"
       ],
       "local_changes": {
         "scope": "Module identity, self-imports, install examples and license/maintenance notices only; algorithms unchanged.",
@@ -63,7 +64,13 @@
         "recorded_at_commit": "31f7ef570b3afcc750e85dcf0211885f89dfb4c8"
       },
       "upstream_patches": [],
-      "updates": []
+      "updates": [
+        {
+          "date": "2026-10-11",
+          "description": "Remove inherited jocover-derived ARM64 assembly; delegate ARM64 public hash entry points to Go crypto/sha256. Preserve Intel BSD terms for AVX512 source and generated assembly.",
+          "details": "sha256-simd/PROVENANCE.md"
+        }
+      ]
     },
     {
       "name": "simdjson-go",
