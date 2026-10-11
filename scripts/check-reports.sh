@@ -24,7 +24,7 @@ output_dir=$1
 shift
 repo_dir=${1:-$(cd "$(dirname "$0")/.." && pwd)}
 [[ $# -le 1 ]] || usage
-case "$mode" in coverage|fuzz|benchmark) ;; *) usage ;; esac
+case "$mode" in environment|coverage|fuzz|benchmark) ;; *) usage ;; esac
 case "$module" in
   highwayhash|sha256-simd|simdjson-go|sio|crc64nvme|md5-simd) ;;
   *) echo "Unknown report module: $module" >&2; exit 2 ;;
@@ -93,6 +93,8 @@ func main() {
 GO
   go run "$output_dir/cpu-probe.go" 2>&1 | tee -a "$output_dir/environment.txt"
 fi
+
+if [[ "$mode" == environment ]]; then exit 0; fi
 
 case "$mode" in
   coverage)
