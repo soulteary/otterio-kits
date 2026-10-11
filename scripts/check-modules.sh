@@ -139,6 +139,7 @@ check_layout() {
         ;;
     esac
   done
+  require_file "$repo_dir/sha256-simd/LICENSE.Intel"
   require_file "$repo_dir/md5-simd/LICENSE.Igneous"
   echo "Layout verified: six release modules, two auxiliary modules, Go $workspace_go and per-module license materials."
 }
