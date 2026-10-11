@@ -66,7 +66,7 @@ jobs:
       uses: soulteary/go-test-report-action@bf04b539f7bf2a6f67d602da4259904b3dcdeba1
       with:
         directory: ${{ matrix.module }}
-        version: v1.1.2
+        version: ${{ runner.os == 'macOS' && 'source' || 'v1.1.2' }}
         packages: ./...
         race: 'true'
         cover_mode: atomic
@@ -90,6 +90,10 @@ jobs:
         commit: 'false'
         output: .github/reports/${{ matrix.module }}/goreportcard.svg
         report_output: .github/reports/${{ matrix.module }}/goreportcard-report.md
+    - name: Validate complete Go quality evidence
+      if: "!cancelled() && steps.go_report_card.outcome == 'success'"
+      shell: bash
+      run: python3 .github/scripts/verify-go-report.py "${{ matrix.module }}"
     - name: Preserve module profile and test log
       if: always() && steps.report_cleanup.outcome == 'success'
       uses: actions/upload-artifact@v7.0.2

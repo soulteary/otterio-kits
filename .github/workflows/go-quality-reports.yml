@@ -194,7 +194,7 @@ jobs:
       uses: soulteary/go-test-report-action@bf04b539f7bf2a6f67d602da4259904b3dcdeba1
       with:
         directory: ${{ matrix.module }}
-        version: v1.1.2
+        version: ${{ runner.os == 'macOS' && 'source' || 'v1.1.2' }}
         packages: ./...
         race: 'true'
         cover_mode: atomic
@@ -218,6 +218,13 @@ jobs:
         commit: 'false'
         output: .github/reports/${{ matrix.module }}/goreportcard.svg
         report_output: .github/reports/${{ matrix.module }}/goreportcard-report.md
+    - name: Validate complete Go quality evidence
+      if: "!cancelled() && steps.go_report_card.outcome == 'success'"
+      shell: bash
+      run: python3 .github/scripts/verify-go-report.py "${{ matrix.module }}"
+    - name: Record module artifact source
+      shell: bash
+      run: git rev-parse HEAD > ".github/reports/${{ matrix.module }}/source-sha.txt"
     - name: Upload module stable reports
       if: always() && steps.report_cleanup.outcome == 'success'
       uses: actions/upload-artifact@v7.0.2
@@ -261,29 +268,11 @@ jobs:
       run: |-
         echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
         echo "artifact_name=go-quality-stable-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
-    - name: Download successful module reports
-      uses: actions/download-artifact@v8.0.1
-      with:
-        github-token: ${{ github.token }}
-        run-id: ${{ github.run_id }}
-        pattern: go-quality-module-${{ github.run_id }}-${{ github.run_attempt }}-*
-        path: ${{ runner.temp }}/module-reports
-    - name: Collect all six complete module reports
+    - name: Collect successful module artifacts across producer attempts
       shell: bash
       env:
-        REPORT_INPUT: ${{ runner.temp }}/module-reports
-      run: |
-        set -euo pipefail
-        test ! -L .github
-        mkdir -p .github/reports
-        for module in highwayhash sha256-simd simdjson-go sio crc64nvme md5-simd; do
-          mkdir -p ".github/reports/$module"
-          for file in go-test-report.md go-test-report.json coverage.svg goreportcard.svg goreportcard-report.md; do
-            src="$REPORT_INPUT/go-quality-module-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-$module/$file"
-            test -f "$src" && test ! -L "$src"
-            cp "$src" ".github/reports/$module/$file"
-          done
-        done
+        GH_TOKEN: ${{ github.token }}
+      run: python3 .github/scripts/collect-module-reports.py
     - name: Upload stable reports
       uses: actions/upload-artifact@v7.0.2
       with:
