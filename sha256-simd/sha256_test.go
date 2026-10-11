@@ -1,3 +1,4 @@
+// Modified by otterio-kits maintainers on 2026-10-11: remove the inherited ARM64 backend and use Go crypto/sha256.
 /*
  * Minio Cloud Storage, (C) 2016 Minio, Inc.
  *
@@ -2237,16 +2238,6 @@ func TestGolden(t *testing.T) {
 			}
 		}
 	}
-
-	if hasArmSha2() {
-		blockfunc = blockfuncArmSha2
-		for _, g := range golden {
-			s := fmt.Sprintf("%x", Sum256([]byte(g.in)))
-			if Sum256([]byte(g.in)) != g.out {
-				t.Fatalf("ARM: Sum256 function: sha256(%s) = %s want %s", g.in, s, hex.EncodeToString(g.out[:]))
-			}
-		}
-	}
 }
 
 func TestSize(t *testing.T) {
@@ -2286,9 +2277,6 @@ func BenchmarkHash(b *testing.B) {
 	algos = append(algos, alg{"Generic", blockfuncForceGeneric})
 	if hasIntelSha {
 		algos = append(algos, alg{"IntelSHA", blockfuncIntelSha})
-	}
-	if hasArmSha2() {
-		algos = append(algos, alg{"ArmSha2", blockfuncArmSha2})
 	}
 	algos = append(algos, alg{"GoStdlib", blockfuncStdlib})
 

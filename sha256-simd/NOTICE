@@ -13,9 +13,13 @@ Copyright (c) 2009 The Go Authors. All rights reserved.
 Kristofer Peterson, (C) 2018.
   sha256block_amd64.s; Apache License, Version 2.0.
 
-Upstream acknowledges Intel intel-ipsec-mb and jocover/sha256-armv8 as
-implementation sources. The original source attribution statements are
-retained in README.md and sha256block_arm64.s.
+Copyright (c) 2017, Intel Corporation.
+  sha256blockAvx512_amd64.asm and generated sha256blockAvx512_amd64.s;
+  see LICENSE.Intel for BSD-3-Clause terms and disclaimer.
+
+The inherited jocover-derived ARM64 assembly is removed from this revision.
+ARM64 New and Sum256 use Go crypto/sha256; no Go assembly is vendored.
+Historical import and research records: PROVENANCE.md.
 
 This notice identifies original software sources and their applicable
 license files. It does not replace those license terms or source notices.

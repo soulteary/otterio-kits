@@ -1,4 +1,4 @@
-//go:build appengine || noasm || (!amd64 && !arm64) || !gc
+//go:build appengine || noasm || !amd64 || !gc
 
 // Copyright 2026 otterIO contributors.
 // SPDX-License-Identifier: Apache-2.0
@@ -18,7 +18,7 @@ func TestCPUFeaturesWithoutAssembly(t *testing.T) {
 	defer func() { cpuid.CPU = savedCPU }()
 	cpuid.CPU.Enable(cpuid.SHA, cpuid.SHA2, cpuid.SSSE3, cpuid.SSE4,
 		cpuid.AVX512F, cpuid.AVX512DQ, cpuid.AVX512BW, cpuid.AVX512VL)
-	if hasIntelSha || hasAvx512 || hasArmSha2() {
+	if hasIntelSha || hasAvx512 {
 		t.Fatal("CPU features enabled an assembly backend that is absent from this build")
 	}
 	if _, ok := New().(*digest); ok {

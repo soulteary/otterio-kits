@@ -1,3 +1,4 @@
+// Modified by otterio-kits maintainers on 2026-10-11: remove the inherited ARM64 backend and use Go crypto/sha256.
 //go:build !noasm && !appengine && gc
 // +build !noasm,!appengine,gc
 
@@ -23,10 +24,6 @@
 package sha256
 
 const assemblyAvailable = true
-
-func blockArmSha2Go(dig *digest, p []byte) {
-	panic("blockArmSha2Go called unexpectedly")
-}
 
 //go:noescape
 func blockIntelSha(h *[8]uint32, message []uint8)

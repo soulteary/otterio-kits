@@ -1,5 +1,6 @@
-//go:build appengine || noasm || (!amd64 && !arm64) || !gc
-// +build appengine noasm !amd64,!arm64 !gc
+// Modified by otterio-kits maintainers on 2026-10-11: remove the inherited ARM64 backend and use Go crypto/sha256.
+//go:build appengine || noasm || !amd64 || !gc
+// +build appengine noasm !amd64 !gc
 
 /*
  * Minio Cloud Storage, (C) 2019 Minio, Inc.
@@ -27,8 +28,4 @@ const assemblyAvailable = false
 func blockIntelShaGo(dig *digest, p []byte) {
 	panic("blockIntelShaGo called unexpectedly")
 
-}
-
-func blockArmSha2Go(dig *digest, p []byte) {
-	panic("blockArmSha2Go called unexpectedly")
 }

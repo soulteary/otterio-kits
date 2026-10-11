@@ -1,3 +1,9 @@
+// Modified by otterio-kits maintainers on 2026-10-11: retain Intel attribution in generated assembly.
+// Derived from sha256blockAvx512_amd64.asm via minio/asm2plan9s.
+// Copyright (c) 2017, Intel Corporation.
+// Intel BSD-3-Clause terms and disclaimer: see LICENSE.Intel.
+// Minio Cloud Storage, (C) 2017 Minio, Inc.; see LICENSE (Apache-2.0).
+
 //+build !noasm,!appengine,gc
 
 TEXT ·sha256X16Avx512(SB), 7, $0
