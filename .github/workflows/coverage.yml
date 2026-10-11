@@ -100,7 +100,7 @@ jobs:
         import subprocess
         import sys
         import tempfile
-        
+
         # Validate the exact invocation that creates the published files.
         directory = sys.argv[1] if len(sys.argv) > 1 else "."
         output = pathlib.Path(".github") if directory == "." else pathlib.Path(".github/reports") / directory
@@ -141,6 +141,8 @@ jobs:
         include-hidden-files: true
         if-no-files-found: error
         retention-days: 14
+    permissions:
+      contents: read
   gate:
     name: Coverage gate
     if: ${{ always() }}
