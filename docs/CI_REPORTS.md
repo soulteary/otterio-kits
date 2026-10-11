@@ -9,7 +9,7 @@ The normal module test workflow remains the required correctness entry point.
 
 `coverage.yml` runs the six runtime modules on Linux with `-race`, a fresh test
 run, and `-covermode=atomic`. This preserves sio's original Linux coverage job.
-Profiles and human-readable totals are uploaded under `coverage-MODULE` and a
+Profiles and human-readable totals are uploaded under `coverage-MODULE-RUN_ID-ATTEMPT` and a
 module total is added to the run summary. Assembly instructions are not counted
 by Go's source coverage; a percentage describes instrumented Go statements.
 
@@ -20,11 +20,17 @@ little room under the original ten-minute test timeout. That module now has a
 and 20 minutes. No tests or corpus entries are skipped. Verbose test logs show
 which test or seed was running if a future run exceeds its limit.
 
-The original Codecov upload is retained with separate module flags. Set the
-repository's `CODECOV_TOKEN` secret to enable it. Upload errors retain the
-upstream nonblocking behavior. The profiles do not depend on Codecov being
-configured and are always available from Actions artifacts. These profiles
-belong to separate module paths and should not be concatenated into one total.
+Go Test Report v1.1.2 produces each module's coverage badge, Markdown/JSON
+report and raw atomic profile from this same test run. Go Report Card v1.1.3
+adds the quality badge and report. Codecov upload has been removed;
+`CODECOV_TOKEN` is no longer needed. PRs only upload evidence. Tag, release and
+manual `go-quality-reports.yml` runs publish all six sets of stable reports
+when the tested revision still matches default-branch HEAD. Each artifact
+records its producer attempt and source SHA; partial retries can reuse an
+unexpired successful producer from an earlier attempt of the same run.
+
+Profiles belong to separate module paths and should not be concatenated into
+one total. README badges link to the actual per-module reports.
 
 ## Fuzzing
 
