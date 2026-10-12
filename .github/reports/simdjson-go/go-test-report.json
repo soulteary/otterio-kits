@@ -7,9 +7,9 @@
     "skipped": 1
   },
   "coverage": {
-    "covered_statements": 1475,
+    "covered_statements": 1483,
     "total_statements": 2319,
-    "percentage": 63.61,
+    "percentage": 63.95,
     "threshold": 0
   },
   "packages": [
@@ -18,7 +18,7 @@
       "status": "pass",
       "tests": 65,
       "failed": 0,
-      "coverage": 71.6
+      "coverage": 71.99
     },
     {
       "name": "examples/openrtb",

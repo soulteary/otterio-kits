@@ -22,8 +22,6 @@
 
 ### gocyclo
 
-- `simdjson-go/examples/openrtb/openrtb_request.go`
-  - Line 57: cyclomatic complexity 97 for function populateTagParams
 - `simdjson-go/stage2_build_tape_amd64.go`
   - Line 160: cyclomatic complexity 60 for function (*internalParsedJson).unifiedMachine
 - `simdjson-go/parsed_serialize.go`
@@ -31,6 +29,18 @@
   - Line 201: cyclomatic complexity 25 for function (*Serializer).Serialize
 - `simdjson-go/fuzz_test.go`
   - Line 94: cyclomatic complexity 37 for function FuzzCorrect
+- `simdjson-go/ftoaryu.go`
+  - Line 22: cyclomatic complexity 23 for function ryuFtoaShortest
+  - Line 213: cyclomatic complexity 17 for function ryuDigits32
+- `simdjson-go/parse_json_amd64.go`
+  - Line 52: cyclomatic complexity 17 for function (*internalParsedJson).parseMessage
+- `simdjson-go/parsed_json.go`
+  - Line 402: cyclomatic complexity 39 for function (*Iter).MarshalJSONBuffer
+  - Line 938: cyclomatic complexity 19 for function (*Iter).Interface
+- `simdjson-go/benchmarks_test.go`
+  - Line 80: cyclomatic complexity 27 for function BenchmarkJsonParserLarge
+- `simdjson-go/parse_number.go`
+  - Line 65: cyclomatic complexity 25 for function parseNumber
 - `simdjson-go/parsed_json_test.go`
   - Line 243: cyclomatic complexity 24 for function TestIter_SetNull
   - Line 343: cyclomatic complexity 20 for function TestIter_SetNull_ObjArr
@@ -40,24 +50,14 @@
   - Line 1146: cyclomatic complexity 17 for function TestIter_SetStringBytes
   - Line 1056: cyclomatic complexity 17 for function TestIter_SetString
   - Line 705: cyclomatic complexity 17 for function TestIter_SetBool
-- `simdjson-go/ftoaryu.go`
-  - Line 22: cyclomatic complexity 23 for function ryuFtoaShortest
-  - Line 213: cyclomatic complexity 17 for function ryuDigits32
+- `simdjson-go/simdjson_amd64_test.go`
+  - Line 29: cyclomatic complexity 18 for function TestParseND
 - `simdjson-go/simdjson_amd64.go`
   - Line 119: cyclomatic complexity 17 for function ParseNDStream
 - `simdjson-go/parse_json_amd64_test.go`
   - Line 137: cyclomatic complexity 16 for function BenchmarkNdjsonColdCountStarWithWhere
-- `simdjson-go/parsed_json.go`
-  - Line 402: cyclomatic complexity 39 for function (*Iter).MarshalJSONBuffer
-  - Line 938: cyclomatic complexity 19 for function (*Iter).Interface
-- `simdjson-go/benchmarks_test.go`
-  - Line 80: cyclomatic complexity 27 for function BenchmarkJsonParserLarge
-- `simdjson-go/parse_number.go`
-  - Line 65: cyclomatic complexity 25 for function parseNumber
-- `simdjson-go/simdjson_amd64_test.go`
-  - Line 29: cyclomatic complexity 18 for function TestParseND
-- `simdjson-go/parse_json_amd64.go`
-  - Line 52: cyclomatic complexity 17 for function (*internalParsedJson).parseMessage
+- `simdjson-go/examples/openrtb/openrtb_request.go`
+  - Line 57: cyclomatic complexity 97 for function populateTagParams
 
 ### misspell
 
