@@ -1,14 +1,6 @@
 <div align="center">
 
-[![otterio-kits — Core Go Libraries](./.github/otterio-kits-banner-v2.png)](https://github.com/soulteary/otterio-kits)
-
-# otterio-kits
-
-**Core Go Libraries** — _Hashing, JSON parsing, and streaming encryption._
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
-[![Go](https://img.shields.io/badge/Go-1.27.2-00ADD8.svg?logo=go&logoColor=white)](./go.work)
-[![GitHub](https://img.shields.io/badge/GitHub-soulteary%2Fotterio--kits-181717.svg?logo=github)](https://github.com/soulteary/otterio-kits)
+[![otterio-kits — Core Go Libraries](./.github/otterio-kits-banner-v2.png)](https://github.com/soulteary/otterio-kits) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE) [![Go](https://img.shields.io/badge/Go-1.27.2-00ADD8.svg?logo=go&logoColor=white)](./go.work) [![GitHub](https://img.shields.io/badge/GitHub-soulteary%2Fotterio--kits-181717.svg?logo=github)](https://github.com/soulteary/otterio-kits) [![highwayhash coverage](./.github/reports/highwayhash/coverage.svg)](./.github/reports/highwayhash/go-test-report.md) [![highwayhash Go Report Card](./.github/reports/highwayhash/goreportcard.svg)](./.github/reports/highwayhash/goreportcard-report.md) [![sha256-simd coverage](./.github/reports/sha256-simd/coverage.svg)](./.github/reports/sha256-simd/go-test-report.md) [![sha256-simd Go Report Card](./.github/reports/sha256-simd/goreportcard.svg)](./.github/reports/sha256-simd/goreportcard-report.md) [![simdjson-go coverage](./.github/reports/simdjson-go/coverage.svg)](./.github/reports/simdjson-go/go-test-report.md) [![simdjson-go Go Report Card](./.github/reports/simdjson-go/goreportcard.svg)](./.github/reports/simdjson-go/goreportcard-report.md) [![sio coverage](./.github/reports/sio/coverage.svg)](./.github/reports/sio/go-test-report.md) [![sio Go Report Card](./.github/reports/sio/goreportcard.svg)](./.github/reports/sio/goreportcard-report.md) [![crc64nvme coverage](./.github/reports/crc64nvme/coverage.svg)](./.github/reports/crc64nvme/go-test-report.md) [![crc64nvme Go Report Card](./.github/reports/crc64nvme/goreportcard.svg)](./.github/reports/crc64nvme/goreportcard-report.md) [![md5-simd coverage](./.github/reports/md5-simd/coverage.svg)](./.github/reports/md5-simd/go-test-report.md) [![md5-simd Go Report Card](./.github/reports/md5-simd/goreportcard.svg)](./.github/reports/md5-simd/goreportcard-report.md)
 
 </div>
 

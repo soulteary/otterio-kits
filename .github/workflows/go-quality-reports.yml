@@ -1,0 +1,432 @@
+name: Go quality reports
+on:
+  push:
+    tags:
+    - '**'
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Source tag or branch to report (empty uses the selected ref)
+        type: string
+        required: false
+        default: ''
+      reuse_existing_tag_report:
+        description: Skip tests if a successful tag report already covers this source
+        type: boolean
+        required: false
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: go-quality-${{ inputs.source_ref || github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+jobs:
+  release_gate:
+    name: Select tag or missing-release report run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      enabled: ${{ steps.trigger.outputs.enabled }}
+      source_sha: ${{ steps.trigger.outputs.source_sha }}
+    steps:
+    - uses: actions/checkout@v7.0.1
+      with:
+        persist-credentials: false
+        ref: ${{ inputs.source_ref || github.sha }}
+    - name: Avoid repeating ordinary tag reports
+      id: trigger
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        REQUEST_REUSE: ${{ inputs.reuse_existing_tag_report && 'true' || 'false' }}
+        REPOSITORY: ${{ github.repository }}
+        WORKFLOW_REF: ${{ github.workflow_ref }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        python3 - <<'PYTHON'
+        import json
+        import os
+        import re
+        import subprocess
+        import urllib.parse
+        import urllib.request
+
+        sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        enabled = True
+        if os.environ["EVENT_NAME"] == "release" or os.environ.get("REQUEST_REUSE") == "true":
+            query = urllib.parse.urlencode({"event": "push", "head_sha": sha, "per_page": 100})
+            base = os.environ["GITHUB_API_URL"].rstrip("/")
+            workflow = os.environ["WORKFLOW_REF"].split("/.github/workflows/", 1)[1].split("@refs/", 1)[0]
+            workflow = urllib.parse.quote(workflow, safe="")
+            url = f"{base}/repos/{os.environ['REPOSITORY']}/actions/workflows/{workflow}/runs?{query}"
+            while url:
+                request = urllib.request.Request(url, headers={
+                    "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                })
+                with urllib.request.urlopen(request, timeout=30) as response:
+                    data = json.load(response)
+                    link = response.headers.get("Link", "")
+                for run in data.get("workflow_runs", []):
+                    if run.get("event") == "push" and run.get("head_sha") == sha:
+                        if run.get("status") == "completed" and run.get("conclusion") == "success":
+                            artifact_url = f"{base}/repos/{os.environ['REPOSITORY']}/actions/runs/{run['id']}/artifacts?per_page=100"
+                            while artifact_url:
+                                artifact_request = urllib.request.Request(artifact_url, headers=dict(request.headers))
+                                with urllib.request.urlopen(artifact_request, timeout=30) as artifact_response:
+                                    artifacts = json.load(artifact_response)
+                                    artifact_link = artifact_response.headers.get("Link", "")
+                                for artifact in artifacts.get("artifacts", []):
+                                    match = re.fullmatch(f"go-quality-stable-{run['id']}-([1-9][0-9]*)", artifact.get("name", ""))
+                                    if match and int(match.group(1)) <= run["run_attempt"] and artifact.get("expired") is False:
+                                        attempt = int(match.group(1))
+                                        jobs_url = f"{base}/repos/{os.environ['REPOSITORY']}/actions/runs/{run['id']}/attempts/{attempt}/jobs?per_page=100"
+                                        producer_succeeded = False
+                                        while jobs_url:
+                                            jobs_request = urllib.request.Request(jobs_url, headers=dict(request.headers))
+                                            with urllib.request.urlopen(jobs_request, timeout=30) as jobs_response:
+                                                jobs = json.load(jobs_response)
+                                                jobs_link = jobs_response.headers.get("Link", "")
+                                            producer_succeeded = producer_succeeded or any(
+                                                job.get("name") == "Release and manual Go reports"
+                                                and job.get("conclusion") == "success"
+                                                for job in jobs.get("jobs", [])
+                                            )
+                                            jobs_url = None
+                                            for relation in jobs_link.split(","):
+                                                if 'rel="next"' in relation:
+                                                    candidate = relation.strip().split(">", 1)[0].lstrip("<")
+                                                    if not candidate.startswith(base + "/"):
+                                                        raise RuntimeError("Unexpected jobs pagination API host")
+                                                    jobs_url = candidate
+                                                    break
+                                        if producer_succeeded:
+                                            enabled = False
+                                            break
+                                if not enabled:
+                                    break
+                                artifact_url = None
+                                for relation in artifact_link.split(","):
+                                    if 'rel="next"' in relation:
+                                        candidate = relation.strip().split(">", 1)[0].lstrip("<")
+                                        if not candidate.startswith(base + "/"):
+                                            raise RuntimeError("Unexpected artifact pagination API host")
+                                        artifact_url = candidate
+                                        break
+                            if not enabled:
+                                break
+                if not enabled:
+                    break
+                url = None
+                for relation in link.split(","):
+                    if 'rel="next"' in relation:
+                        candidate = relation.strip().split(">", 1)[0].lstrip("<")
+                        if not candidate.startswith(base + "/"):
+                            raise RuntimeError("Unexpected pagination API host")
+                        url = candidate
+                        break
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            output.write(f"enabled={str(enabled).lower()}\nsource_sha={sha}\n")
+        if not enabled:
+            with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+                summary.write("Available artifacts from successful tag-push reports cover this source; skipping duplicate release tests.\n")
+        PYTHON
+  modules:
+    name: Report module ${{ matrix.module }}
+    needs: release_gate
+    if: needs.release_gate.outputs.enabled == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+        - highwayhash
+        - sha256-simd
+        - simdjson-go
+        - sio
+        - crc64nvme
+        - md5-simd
+    env:
+      GOWORK: off
+      GOTOOLCHAIN: local
+      GOFLAGS: -mod=readonly
+      CGO_ENABLED: '1'
+    steps:
+    - uses: actions/checkout@v7.0.1
+      with:
+        ref: ${{ needs.release_gate.outputs.source_sha }}
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-go@v7.0.0
+      with:
+        go-version-file: go.work
+        cache-dependency-path: |
+          **/go.mod
+          **/go.sum
+    - name: Record tested source
+      id: source
+      shell: bash
+      run: |
+        echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+    - name: Remove stale generated report evidence
+      id: report_cleanup
+      shell: bash
+      run: |
+        set -euo pipefail
+        test ! -L .github
+        test ! -L .github/reports
+        mkdir -p ".github/reports/${{ matrix.module }}"
+        test ! -L ".github/reports/${{ matrix.module }}"
+        rm -f -- ".github/reports/${{ matrix.module }}/"*.md ".github/reports/${{ matrix.module }}/"*.json ".github/reports/${{ matrix.module }}/"*.svg
+    - name: Validate native report environment
+      shell: bash
+      run: bash scripts/check-reports.sh environment "${{ matrix.module }}" "reports/coverage/${{ matrix.module }}"
+    - name: Test, race and coverage (GTR v1.1.2)
+      id: go_test_report
+      uses: soulteary/go-test-report-action@bf04b539f7bf2a6f67d602da4259904b3dcdeba1
+      with:
+        directory: ${{ matrix.module }}
+        version: ${{ runner.os == 'macOS' && 'source' || 'v1.1.2' }}
+        packages: ./...
+        race: 'true'
+        cover_mode: atomic
+        coverage_threshold: '0'
+        test_args: -v -count=1
+        timeout: ${{ matrix.module == 'simdjson-go' && '20m' || '10m' }}
+        commit: 'false'
+        report_output: .github/reports/${{ matrix.module }}/go-test-report.md
+        json_output: .github/reports/${{ matrix.module }}/go-test-report.json
+        badge_output: .github/reports/${{ matrix.module }}/coverage.svg
+        raw_output: reports/coverage/${{ matrix.module }}/raw
+    - name: Go quality report (v1.1.3)
+      id: go_report_card
+      uses: soulteary/goreportcard-action@fc43049a5fe61c3313294d217c2a783f375a7970
+      if: "!cancelled() && steps.report_cleanup.outcome == 'success'"
+      with:
+        directory: ${{ matrix.module }}
+        version: v1.1.3
+        threshold: '0'
+        report: 'true'
+        commit: 'false'
+        output: .github/reports/${{ matrix.module }}/goreportcard.svg
+        report_output: .github/reports/${{ matrix.module }}/goreportcard-report.md
+    - name: Validate complete Go quality evidence
+      if: "!cancelled() && steps.go_report_card.outcome == 'success'"
+      shell: bash
+      run: |
+        python3 - "${{ matrix.module }}" <<'PY'
+        import json
+        import pathlib
+        import subprocess
+        import sys
+        import tempfile
+        
+        # Validate the exact invocation that creates the published files.
+        directory = sys.argv[1] if len(sys.argv) > 1 else "."
+        output = pathlib.Path(".github") if directory == "." else pathlib.Path(".github/reports") / directory
+        output.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary = pathlib.Path(temporary)
+            result = subprocess.run(
+                ["goreportcard-cli", "-d", directory, "-j",
+                 "-svg", str(temporary / "goreportcard.svg"),
+                 "-report", str(temporary / "goreportcard-report.md")],
+                check=True, capture_output=True, text=True,
+            )
+            # The CLI emits write confirmations before its final JSON line.
+            report = json.loads(result.stdout.splitlines()[-1])
+            required = {"gofmt", "go_vet", "ineffassign", "gocyclo", "license", "misspell"}
+            checks = report.get("checks", [])
+            if {check.get("name") for check in checks} != required:
+                raise SystemExit("Go Report Card did not return the complete checker set")
+            errors = [check for check in checks if check.get("error")]
+            if report.get("did_error") or errors:
+                for check in errors:
+                    print(check["name"] + ": " + check["error"], file=sys.stderr)
+                raise SystemExit("Refusing to publish incomplete Go Report Card evidence")
+            for filename in ("goreportcard.svg", "goreportcard-report.md"):
+                target = output / filename
+                if target.is_symlink():
+                    raise SystemExit("Refusing a symlink report target")
+                target.write_bytes((temporary / filename).read_bytes())
+        PY
+    - name: Record module artifact source
+      shell: bash
+      run: git rev-parse HEAD > ".github/reports/${{ matrix.module }}/source-sha.txt"
+    - name: Upload module stable reports
+      if: always() && steps.report_cleanup.outcome == 'success'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: go-quality-module-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.module }}
+        path: .github/reports/${{ matrix.module }}/
+        include-hidden-files: true
+        if-no-files-found: error
+        retention-days: 14
+    - name: Upload module raw evidence
+      if: always() && steps.report_cleanup.outcome == 'success'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: go-quality-raw-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.module }}
+        path: reports/coverage/${{ matrix.module }}/
+        include-hidden-files: true
+        retention-days: 14
+  reports:
+    needs:
+    - release_gate
+    - modules
+    if: needs.release_gate.outputs.enabled == 'true' && needs.modules.result == 'success'
+    name: Release and manual Go reports
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      source_sha: ${{ steps.source.outputs.sha }}
+      artifact_name: ${{ steps.source.outputs.artifact_name }}
+    steps:
+    - uses: actions/checkout@v7.0.1
+      with:
+        ref: ${{ needs.release_gate.outputs.source_sha }}
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Record tested source
+      id: source
+      shell: bash
+      run: |-
+        echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        echo "artifact_name=go-quality-stable-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+    - name: Collect successful module artifacts across producer attempts
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        python3 - <<'PY'
+        import datetime
+        import io
+        import json
+        import os
+        import pathlib
+        import re
+        import subprocess
+        import zipfile
+        
+        MODULES = ("highwayhash", "sha256-simd", "simdjson-go", "sio", "crc64nvme", "md5-simd")
+        FILES = ("go-test-report.md", "go-test-report.json", "coverage.svg", "goreportcard.svg", "goreportcard-report.md")
+        repository = os.environ["GITHUB_REPOSITORY"]
+        run_id = os.environ["GITHUB_RUN_ID"]
+        current_attempt = int(os.environ["GITHUB_RUN_ATTEMPT"])
+        expected_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+        
+        def api(endpoint):
+            return json.loads(subprocess.check_output(["gh", "api", endpoint, "--paginate", "--slurp"], text=True))
+        
+        artifacts = [item for page in api(f"repos/{repository}/actions/runs/{run_id}/artifacts") for item in page["artifacts"]]
+        jobs = {}
+        now = datetime.datetime.now(datetime.timezone.utc)
+        for module in MODULES:
+            candidates = []
+            for artifact in artifacts:
+                match = re.fullmatch(rf"go-quality-module-{run_id}-(\d+)-{re.escape(module)}", artifact["name"])
+                if not match or artifact["expired"]:
+                    continue
+                attempt = int(match[1])
+                if attempt > current_attempt or datetime.datetime.fromisoformat(artifact["expires_at"].replace("Z", "+00:00")) <= now:
+                    continue
+                if attempt not in jobs:
+                    jobs[attempt] = [item for page in api(f"repos/{repository}/actions/runs/{run_id}/attempts/{attempt}/jobs") for item in page["jobs"]]
+                if any(job["name"] == f"Report module {module}" and job["status"] == "completed" and job["conclusion"] == "success" for job in jobs[attempt]):
+                    candidates.append((attempt, artifact))
+            if not candidates:
+                raise SystemExit(f"No unexpired successful producer artifact for {module}")
+            artifact = max(candidates, key=lambda candidate: candidate[0])[1]
+            payload = subprocess.check_output(["gh", "api", f"repos/{repository}/actions/artifacts/{artifact['id']}/zip"])
+            with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+                if archive.read("source-sha.txt").decode().strip() != expected_sha:
+                    raise SystemExit(f"Producer source SHA does not match for {module}")
+                output = pathlib.Path(".github/reports") / module
+                if output.is_symlink():
+                    raise SystemExit("Refusing a symlink report directory")
+                output.mkdir(parents=True, exist_ok=True)
+                for filename in FILES:
+                    entry = archive.getinfo(filename)
+                    if entry.is_dir() or (entry.external_attr >> 16) & 0o170000 == 0o120000:
+                        raise SystemExit("Refusing non-file report evidence")
+                    target = output / filename
+                    if target.is_symlink():
+                        raise SystemExit("Refusing a symlink report target")
+                    target.write_bytes(archive.read(entry))
+            print(f"Collected {module} from successful producer attempt {artifact['name']}")
+        PY
+    - name: Upload stable reports
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: ${{ steps.source.outputs.artifact_name }}
+        path: .github/reports/
+        include-hidden-files: true
+        if-no-files-found: error
+        retention-days: 14
+  writeback:
+    name: Publish reports once (unchanged default branch only)
+    needs:
+    - reports
+    if: github.event_name != 'pull_request' && (github.event_name == 'workflow_dispatch' || github.event_name == 'release' || startsWith(github.ref, 'refs/tags/'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    concurrency:
+      group: go-report-writeback-${{ github.repository }}-${{ needs.reports.outputs.source_sha }}
+      cancel-in-progress: false
+    steps:
+    - uses: actions/checkout@v7.0.1
+      with:
+        ref: ${{ needs.reports.outputs.source_sha }}
+        fetch-depth: 0
+    - uses: actions/download-artifact@v8.0.1                                      # v8.0.1
+      with:
+        github-token: ${{ github.token }}
+        run-id: ${{ github.run_id }}
+        name: ${{ needs.reports.outputs.artifact_name }}
+        path: ${{ runner.temp }}/go-quality-stable/.github/reports
+    - name: Commit only verified stable reports
+      shell: bash
+      env:
+        SOURCE_SHA: ${{ needs.reports.outputs.source_sha }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        REPORT_DIR: ${{ runner.temp }}/go-quality-stable
+      run: |
+        set -euo pipefail
+        git fetch origin "$DEFAULT_BRANCH"
+        current=$(git rev-parse FETCH_HEAD)
+        if [ "$current" != "$SOURCE_SHA" ]; then
+          echo "Default branch differs from the tested source; reports remain available as artifacts." >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+        git switch -C "$DEFAULT_BRANCH" "$current"
+        test ! -L .github
+        test ! -L .github/reports
+        for module in highwayhash sha256-simd simdjson-go sio crc64nvme md5-simd; do
+          mkdir -p ".github/reports/$module"
+          test ! -L ".github/reports/$module"
+          for file in go-test-report.md go-test-report.json coverage.svg goreportcard.svg goreportcard-report.md; do
+            src="$REPORT_DIR/.github/reports/$module/$file"
+            dst=".github/reports/$module/$file"
+            test -f "$src" && test ! -L "$src" && test ! -L "$dst"
+            cp "$src" "$dst"
+            git add -f -- "$dst"
+          done
+        done
+        if git diff --cached --quiet; then exit 0; fi
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git commit -m "chore: update Go quality reports"
+        git push origin "HEAD:refs/heads/$DEFAULT_BRANCH"

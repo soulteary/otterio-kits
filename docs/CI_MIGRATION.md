@@ -28,3 +28,5 @@ bash scripts/check-modules.sh verify
 ```
 
 For example, read an original workflow with `git show <highwayhash-import-commit>:highwayhash/.github/workflows/go.yml`. Obtain the actual import SHA from `UPSTREAMS.json`. Deleting a file in a later maintenance commit does not change the import commit's tree.
+
+Coverage reporting now uses pinned Go Test Report and Go Report Card releases with per-module artifacts and local README badges; the earlier Codecov upload was removed. See [Independent module reports](CI_REPORTS.md).

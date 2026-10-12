@@ -33,40 +33,116 @@ jobs:
         module: ${{ fromJSON(needs.changes.outputs.runtime) }}
     env:
       MODULE: ${{ matrix.module }}
-      HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
     steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-go@v7.0.0
-        with:
-          go-version-file: go.work
-          cache-dependency-path: |
-            **/go.mod
-            **/go.sum
-      - name: Collect module coverage independently
-        run: bash scripts/check-reports.sh coverage "$MODULE" "reports/coverage/$MODULE"
-      - name: Preserve module profile and test log
-        if: always()
-        uses: actions/upload-artifact@v7.0.2
-        with:
-          name: coverage-${{ matrix.module }}
-          path: reports/coverage/${{ matrix.module }}/
-          if-no-files-found: error
-          retention-days: 14
-      # Preserve sio's optional upstream Codecov integration with module flags.
-      # Profiles remain available as artifacts even when no token is configured.
-      - name: Upload module coverage to Codecov
-        if: success() && env.HAS_CODECOV_TOKEN == 'true'
-        uses: codecov/codecov-action@v7.1.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: reports/coverage/${{ matrix.module }}/coverage.out
-          flags: ${{ matrix.module }}
-          name: ${{ matrix.module }}
-          disable_search: true
-          fail_ci_if_error: false
+    - uses: actions/checkout@v7.0.1
+      with:
+        persist-credentials: false
+    - uses: actions/setup-go@v7.0.0
+      with:
+        go-version-file: go.work
+        cache-dependency-path: |
+          **/go.mod
+          **/go.sum
+    - name: Record tested source
+      id: source
+      shell: bash
+      run: |
+        echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+    - name: Remove stale generated report evidence
+      id: report_cleanup
+      shell: bash
+      run: |
+        set -euo pipefail
+        test ! -L .github
+        test ! -L .github/reports
+        mkdir -p ".github/reports/${{ matrix.module }}"
+        test ! -L ".github/reports/${{ matrix.module }}"
+        rm -f -- ".github/reports/${{ matrix.module }}/"*.md ".github/reports/${{ matrix.module }}/"*.json ".github/reports/${{ matrix.module }}/"*.svg
+    - name: Validate native report environment
+      shell: bash
+      run: bash scripts/check-reports.sh environment "${{ matrix.module }}" "reports/coverage/${{ matrix.module }}"
+    - name: Test, race and coverage (GTR v1.1.2)
+      id: go_test_report
+      uses: soulteary/go-test-report-action@bf04b539f7bf2a6f67d602da4259904b3dcdeba1
+      with:
+        directory: ${{ matrix.module }}
+        version: ${{ runner.os == 'macOS' && 'source' || 'v1.1.2' }}
+        packages: ./...
+        race: 'true'
+        cover_mode: atomic
+        coverage_threshold: '0'
+        test_args: -v -count=1
+        timeout: ${{ matrix.module == 'simdjson-go' && '20m' || '10m' }}
+        commit: 'false'
+        report_output: .github/reports/${{ matrix.module }}/go-test-report.md
+        json_output: .github/reports/${{ matrix.module }}/go-test-report.json
+        badge_output: .github/reports/${{ matrix.module }}/coverage.svg
+        raw_output: reports/coverage/${{ matrix.module }}/raw
+    - name: Go quality report (v1.1.3)
+      id: go_report_card
+      uses: soulteary/goreportcard-action@fc43049a5fe61c3313294d217c2a783f375a7970
+      if: "!cancelled() && steps.report_cleanup.outcome == 'success'"
+      with:
+        directory: ${{ matrix.module }}
+        version: v1.1.3
+        threshold: '0'
+        report: 'true'
+        commit: 'false'
+        output: .github/reports/${{ matrix.module }}/goreportcard.svg
+        report_output: .github/reports/${{ matrix.module }}/goreportcard-report.md
+    - name: Validate complete Go quality evidence
+      if: "!cancelled() && steps.go_report_card.outcome == 'success'"
+      shell: bash
+      run: |
+        python3 - "${{ matrix.module }}" <<'PY'
+        import json
+        import pathlib
+        import subprocess
+        import sys
+        import tempfile
 
+        # Validate the exact invocation that creates the published files.
+        directory = sys.argv[1] if len(sys.argv) > 1 else "."
+        output = pathlib.Path(".github") if directory == "." else pathlib.Path(".github/reports") / directory
+        output.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary = pathlib.Path(temporary)
+            result = subprocess.run(
+                ["goreportcard-cli", "-d", directory, "-j",
+                 "-svg", str(temporary / "goreportcard.svg"),
+                 "-report", str(temporary / "goreportcard-report.md")],
+                check=True, capture_output=True, text=True,
+            )
+            # The CLI emits write confirmations before its final JSON line.
+            report = json.loads(result.stdout.splitlines()[-1])
+            required = {"gofmt", "go_vet", "ineffassign", "gocyclo", "license", "misspell"}
+            checks = report.get("checks", [])
+            if {check.get("name") for check in checks} != required:
+                raise SystemExit("Go Report Card did not return the complete checker set")
+            errors = [check for check in checks if check.get("error")]
+            if report.get("did_error") or errors:
+                for check in errors:
+                    print(check["name"] + ": " + check["error"], file=sys.stderr)
+                raise SystemExit("Refusing to publish incomplete Go Report Card evidence")
+            for filename in ("goreportcard.svg", "goreportcard-report.md"):
+                target = output / filename
+                if target.is_symlink():
+                    raise SystemExit("Refusing a symlink report target")
+                target.write_bytes((temporary / filename).read_bytes())
+        PY
+    - name: Preserve module profile and test log
+      if: always() && steps.report_cleanup.outcome == 'success'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: coverage-${{ matrix.module }}-${{ github.run_id }}-${{ github.run_attempt }}
+        path: |
+          .github/reports/${{ matrix.module }}/
+          reports/coverage/${{ matrix.module }}/
+        include-hidden-files: true
+        if-no-files-found: error
+        retention-days: 14
+    permissions:
+      contents: read
   gate:
     name: Coverage gate
     if: ${{ always() }}
@@ -74,10 +150,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - name: Require selection and selected checks to succeed
-        env:
-          CI_NEEDS_JSON: ${{ toJSON(needs) }}
-        run: python3 scripts/check-ci-gate.py --job coverage:runtime
+    - uses: actions/checkout@v7.0.1
+      with:
+        persist-credentials: false
+    - name: Require selection and selected checks to succeed
+      env:
+        CI_NEEDS_JSON: ${{ toJSON(needs) }}
+      run: python3 scripts/check-ci-gate.py --job coverage:runtime
