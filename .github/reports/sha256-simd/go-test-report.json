@@ -2,14 +2,14 @@
   "schema_version": "1.0",
   "tests": {
     "total": 18,
-    "passed": 17,
+    "passed": 10,
     "failed": 0,
-    "skipped": 1
+    "skipped": 8
   },
   "coverage": {
-    "covered_statements": 344,
+    "covered_statements": 224,
     "total_statements": 361,
-    "percentage": 95.29,
+    "percentage": 62.05,
     "threshold": 0
   },
   "packages": [
@@ -18,7 +18,7 @@
       "status": "pass",
       "tests": 18,
       "failed": 0,
-      "coverage": 95.29
+      "coverage": 62.05
     }
   ],
   "failures": null
