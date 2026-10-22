@@ -1,10 +1,10 @@
-go 1.27.2
+go 1.27.3
 
 use (
+	./crc64nvme
 	./highwayhash
+	./md5-simd
 	./sha256-simd
 	./simdjson-go
 	./sio
-	./crc64nvme
-	./md5-simd
 )
