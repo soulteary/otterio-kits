@@ -10,7 +10,7 @@
     "aquasecurity/trivy-action": "a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8",
     "soulteary/go-test-report-action": "bf04b539f7bf2a6f67d602da4259904b3dcdeba1",
     "soulteary/goreportcard-action": "fc43049a5fe61c3313294d217c2a783f375a7970",
-    "actions/download-artifact": "v8.0.1"
+    "actions/download-artifact": "v8.0.2"
   },
   "go_tools": {
     "actionlint": {
