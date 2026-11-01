@@ -55,3 +55,17 @@ including unchanged writer controls, so they establish no throughput claim.
 Use the same-runner Linux benchmark comparison and retain its hardware metadata
 before releasing the scheduling/reader refactors. Cross-compilation, native tests,
 and measured performance must be reported separately.
+
+The native Linux comparison at source `84e4947` used ten 200 ms samples per
+selector and the same runner for each module's base/head pair. MD5 AVX2 latency,
+bytes, and allocations had no statistically significant change. SIO's 1 MiB
+encryption median changed +0.52% and decryption -0.40%, with reader allocations
+unchanged; an unchanged writer control varied by +0.91%. JSON parsing workloads
+had no significant changes. These are workload-specific observations, not a
+promise of application throughput.
+
+That run also exposed a report-generation defect: Go's stderr download messages
+were included in `benchmarks.txt`, and benchstat interpreted `go: downloading`
+as a configuration key, splitting the SIO base/head into separate tables.
+Benchmark stderr is now retained in `diagnostics.txt`; stdout alone is used for
+benchmark comparisons, while the pipeline statuses still propagate test and output-write failures.

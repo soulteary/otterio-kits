@@ -158,8 +158,17 @@ case "$mode" in
       md5-simd) selector='^Benchmark(Avx2|CryptoMd5)$/^(32KB|1MB)$' ;;
     esac
     printf 'selector: %s\nbenchtime: %s\ncount: %s\ncpu: 1\n' "$selector" "${BENCHTIME:-200ms}" "${BENCH_COUNT:-10}" >> "$output_dir/environment.txt"
+    # Keep Go build/download diagnostics out of benchstat's configuration keys.
+    # Retain and replay stderr, preserving failures from both go test and tee.
+    set +e
     go test -run '^$' -bench "$selector" -benchmem -benchtime="${BENCHTIME:-200ms}" \
-      -count="${BENCH_COUNT:-10}" -cpu=1 -timeout=10m . 2>&1 | tee "$output_dir/benchmarks.txt"
+      -count="${BENCH_COUNT:-10}" -cpu=1 -timeout=10m . \
+      2> "$output_dir/diagnostics.txt" | tee "$output_dir/benchmarks.txt"
+    benchmark_status=("${PIPESTATUS[@]}")
+    set -e
+    cat "$output_dir/diagnostics.txt" >&2
+    if [[ "${benchmark_status[0]}" -ne 0 ]]; then exit "${benchmark_status[0]}"; fi
+    if [[ "${benchmark_status[1]}" -ne 0 ]]; then exit "${benchmark_status[1]}"; fi
     if ! grep -E '^Benchmark[^[:space:]]+[[:space:]]+[0-9]+[[:space:]]' "$output_dir/benchmarks.txt" >/dev/null; then
       echo "No benchmark measurements were produced for $module; selector or CPU support changed." >&2
       exit 1
