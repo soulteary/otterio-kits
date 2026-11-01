@@ -71,19 +71,8 @@ func (r *encReaderV20) Read(p []byte) (n int, err error) {
 	if r.stateErr != nil {
 		return 0, r.stateErr
 	}
-	if r.firstRead {
-		r.firstRead = false
-		_, err = io.ReadFull(r.src, r.buffer[headerSize:headerSize+1])
-		if err != nil && err != io.EOF { // ErrUnexpectedEOF cannot happen b/c we read just one single byte
-			return 0, err
-		}
-		if err == io.EOF {
-			r.finalized = true
-			r.stateErr = io.EOF
-			r.recycle()
-			return 0, io.EOF
-		}
-		r.lastByte = r.buffer[headerSize]
+	if err := r.readFirstByte(); err != nil {
+		return 0, err
 	}
 
 	if r.offset > 0 { // write the buffered package to p
@@ -121,36 +110,61 @@ func (r *encReaderV20) Read(p []byte) (n int, err error) {
 		n += maxPackageSize
 	}
 	if len(p) > 0 {
-		r.buffer[headerSize] = r.lastByte
-		nn, err := io.ReadFull(r.src, r.buffer[headerSize+1:headerSize+1+maxPayloadSize]) // try to read the max. payload
-		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-			r.stateErr = err
-			r.recycle()
-			return n, err // failed to read from src
-		}
-		if err == io.EOF || err == io.ErrUnexpectedEOF { // read less than 64KB -> final package
-			if sealErr := r.SealFinal(r.buffer, r.buffer[headerSize:headerSize+1+nn]); sealErr != nil {
-				r.stateErr = sealErr
-				r.recycle()
-				return n, sealErr
-			}
-			if len(p) > r.buffer.Length() {
-				n += copy(p, r.buffer[:r.buffer.Length()])
-				r.stateErr = io.EOF
-				r.recycle()
-				return n, io.EOF
-			}
-		} else {
-			r.lastByte = r.buffer[headerSize+maxPayloadSize] // save last read byte for the next package
-			if sealErr := r.Seal(r.buffer, r.buffer[headerSize:headerSize+maxPayloadSize]); sealErr != nil {
-				r.stateErr = sealErr
-				r.recycle()
-				return n, sealErr
-			}
-		}
-		r.offset = copy(p, r.buffer[:len(p)]) // len(p) < len(r.buffer) - otherwise we would be still in the for-loop
-		n += r.offset
+		nn, err := r.readSmall(p)
+		return n + nn, err
 	}
+	return n, nil
+}
+
+func (r *encReaderV20) readFirstByte() error {
+	if !r.firstRead {
+		return nil
+	}
+	r.firstRead = false
+	_, err := io.ReadFull(r.src, r.buffer[headerSize:headerSize+1])
+	if err != nil && err != io.EOF { // ErrUnexpectedEOF cannot happen b/c we read just one single byte
+		return err
+	}
+	if err == io.EOF {
+		r.finalized = true
+		r.stateErr = io.EOF
+		r.recycle()
+		return io.EOF
+	}
+	r.lastByte = r.buffer[headerSize]
+	return nil
+}
+
+func (r *encReaderV20) readSmall(p []byte) (n int, err error) {
+	r.buffer[headerSize] = r.lastByte
+	nn, err := io.ReadFull(r.src, r.buffer[headerSize+1:headerSize+1+maxPayloadSize]) // try to read the max. payload
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		r.stateErr = err
+		r.recycle()
+		return n, err // failed to read from src
+	}
+	if err == io.EOF || err == io.ErrUnexpectedEOF { // read less than 64KB -> final package
+		if sealErr := r.SealFinal(r.buffer, r.buffer[headerSize:headerSize+1+nn]); sealErr != nil {
+			r.stateErr = sealErr
+			r.recycle()
+			return n, sealErr
+		}
+		if len(p) > r.buffer.Length() {
+			n += copy(p, r.buffer[:r.buffer.Length()])
+			r.stateErr = io.EOF
+			r.recycle()
+			return n, io.EOF
+		}
+	} else {
+		r.lastByte = r.buffer[headerSize+maxPayloadSize] // save last read byte for the next package
+		if sealErr := r.Seal(r.buffer, r.buffer[headerSize:headerSize+maxPayloadSize]); sealErr != nil {
+			r.stateErr = sealErr
+			r.recycle()
+			return n, sealErr
+		}
+	}
+	r.offset = copy(p, r.buffer[:len(p)]) // len(p) < len(r.buffer) - otherwise we would be still in the for-loop
+	n += r.offset
 	return n, nil
 }
 
@@ -214,26 +228,32 @@ func (r *decReaderV20) Read(p []byte) (n int, err error) {
 		n += len(r.buffer.Payload())
 	}
 	if len(p) > 0 {
-		nn, err := io.ReadFull(r.src, r.buffer)
-		if err == io.EOF && !r.finalized {
-			r.recycle()
-			r.stateErr = errUnexpectedEOF
-			return n, errUnexpectedEOF // reached EOF but not seen final package yet
-		}
-		if err != nil && err != io.ErrUnexpectedEOF {
-			r.recycle()
-			r.stateErr = err
-			return n, err // reading from src failed or reached EOF
-		}
-		if err = r.Open(r.buffer[headerSize:], r.buffer[:nn]); err != nil {
-			return n, err // decryption failed
-		}
-		if payload := r.buffer.Payload(); len(p) < len(payload) {
-			r.offset = copy(p, payload[:len(p)])
-			n += r.offset
-		} else {
-			n += copy(p, payload)
-		}
+		nn, err := r.readSmall(p)
+		return n + nn, err
+	}
+	return n, nil
+}
+
+func (r *decReaderV20) readSmall(p []byte) (n int, err error) {
+	nn, err := io.ReadFull(r.src, r.buffer)
+	if err == io.EOF && !r.finalized {
+		r.recycle()
+		r.stateErr = errUnexpectedEOF
+		return n, errUnexpectedEOF // reached EOF but not seen final package yet
+	}
+	if err != nil && err != io.ErrUnexpectedEOF {
+		r.recycle()
+		r.stateErr = err
+		return n, err // reading from src failed or reached EOF
+	}
+	if err = r.Open(r.buffer[headerSize:], r.buffer[:nn]); err != nil {
+		return n, err // decryption failed
+	}
+	if payload := r.buffer.Payload(); len(p) < len(payload) {
+		r.offset = copy(p, payload[:len(p)])
+		n += r.offset
+	} else {
+		n += copy(p, payload)
 	}
 	return n, nil
 }

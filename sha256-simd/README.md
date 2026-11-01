@@ -102,7 +102,7 @@ Other applications that can benefit from enhanced SHA256 performance are dedupli
 
 ## ARM64 implementation
 
-`New()` and `Sum256()` use Go `crypto/sha256` on ARM64. Go 1.27.2 supplies its own SHA2 hardware acceleration and portable fallback. The former jocover-derived assembly and its wrapper have been removed, rather than merely disabled, so they are absent from new module source archives. See [provenance and compatibility](PROVENANCE.md).
+`New()` and `Sum256()` use Go `crypto/sha256` on ARM64. Go 1.27.3 supplies its own SHA2 hardware acceleration and portable fallback. The former jocover-derived assembly and its wrapper have been removed, rather than merely disabled, so they are absent from new module source archives. See [provenance and compatibility](PROVENANCE.md).
 
 Upstream benchmark figures elsewhere in this README are historical results, not measurements of this ARM64 implementation.
 

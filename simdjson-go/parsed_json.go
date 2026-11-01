@@ -962,27 +962,7 @@ func (i *Iter) Interface() (interface{}, error) {
 	case TypeBool:
 		return i.t == TagBoolTrue, nil
 	case TypeRoot:
-		var dst []interface{}
-		var tmp Iter
-		for {
-			typ, obj, err := i.Root(&tmp)
-			if err != nil {
-				return nil, err
-			}
-			if typ == TypeNone {
-				break
-			}
-			elem, err := obj.Interface()
-			if err != nil {
-				return nil, err
-			}
-			dst = append(dst, elem)
-			typ = i.Advance()
-			if typ != TypeRoot {
-				break
-			}
-		}
-		return dst, nil
+		return i.rootInterface()
 	case TypeNone:
 		if i.PeekNextTag() == TagEnd {
 			return nil, errors.New("no content in iterator")
@@ -992,6 +972,31 @@ func (i *Iter) Interface() (interface{}, error) {
 	default:
 	}
 	return nil, fmt.Errorf("unknown tag type: %v", i.t)
+}
+
+// rootInterface collects the current root and subsequent root documents.
+func (i *Iter) rootInterface() (interface{}, error) {
+	var dst []interface{}
+	var tmp Iter
+	for {
+		typ, obj, err := i.Root(&tmp)
+		if err != nil {
+			return nil, err
+		}
+		if typ == TypeNone {
+			break
+		}
+		elem, err := obj.Interface()
+		if err != nil {
+			return nil, err
+		}
+		dst = append(dst, elem)
+		typ = i.Advance()
+		if typ != TypeRoot {
+			break
+		}
+	}
+	return dst, nil
 }
 
 // Object will return the next element as an object.
