@@ -9,7 +9,7 @@ require (
 	github.com/buger/jsonparser v1.6.1
 	github.com/json-iterator/go v1.1.12
 	github.com/klauspost/compress v1.20.3
-	github.com/soulteary/otterio-kits/simdjson-go v0.4.8
+	github.com/soulteary/otterio-kits/simdjson-go v0.4.9
 )
 
 replace github.com/soulteary/otterio-kits/simdjson-go => ../
