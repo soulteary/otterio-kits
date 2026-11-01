@@ -1,11 +1,11 @@
 # Go Report Card
 
-**Grade: A+** (99.2%)
+**Grade: A+** (100.0%)
 
 | Metric | Value |
 | ------ | ----- |
 | Files | 14 |
-| Issues | 1 |
+| Issues | 0 |
 
 ## Checks
 
@@ -13,17 +13,12 @@
 | ----- | ----- |
 | gofmt | 100% |
 | go_vet | 100% |
-| gocyclo | 92% |
+| gocyclo | 100% |
 | ineffassign | 100% |
 | license | 100% |
 | misspell | 100% |
 
-## Issues
-
-### gocyclo
-
-- `md5-simd/md5-server_amd64.go`
-  - Line 113: cyclomatic complexity 32 for function (*md5Server).process
+No issues found. Nice work!
 
 ---
 

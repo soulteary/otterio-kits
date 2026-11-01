@@ -92,7 +92,7 @@ The repository mainline and module CI have been pushed to GitHub; releases remai
 git push origin refs/tags/upstream/highwayhash/v1.0.4
 ```
 
-Repeat for the other five provenance tags. Create and push release tags separately; avoid mixing provenance and releases with `git push --tags`. There is currently no automatic tag test/release entry point. Complete exact-SHA checks before publishing a tag, then download that module by its public tag outside the repository and verify imports, Go requirements, and license packaging.
+Repeat for the other five provenance tags. Create and push release tags separately; avoid mixing provenance and releases with `git push --tags`. Formal tag pushes generate quality reports; tag and GitHub Release creation remain manual. Complete all exact-SHA release checks before publishing a tag, then download that module by its public tag outside the repository and verify imports, Go requirements, and license packaging.
 
 ## References
 

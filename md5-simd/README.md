@@ -1,4 +1,4 @@
-> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/md5-simd`, based on MinIO `md5-simd` `v1.1.2`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
+> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/md5-simd`, based on MinIO `md5-simd` `v1.1.2`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. Published OtterIO module releases are listed in the [release history](https://github.com/soulteary/otterio-kits/releases?q=md5-simd%2F); `md5-simd/v1.2.1` is available. See the [repository maintenance guide](../docs/MAINTENANCE.md).
 
 # md5-simd
 

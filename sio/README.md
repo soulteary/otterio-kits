@@ -1,4 +1,4 @@
-> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/sio`, based on MinIO `sio` `v0.5.1`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. No otterio-kits release has been published yet. See the [repository maintenance guide](../docs/MAINTENANCE.md).
+> **OtterIO maintenance note (2026-10-08):** This module is independently maintained as `github.com/soulteary/otterio-kits/sio`, based on MinIO `sio` `v0.5.1`. Module paths and install examples below have been updated. Other upstream documentation, attribution, benchmark figures and source links are retained for reference. Published OtterIO module releases are listed in the [release history](https://github.com/soulteary/otterio-kits/releases?q=sio%2F); `sio/v0.5.4` is available. See the [repository maintenance guide](../docs/MAINTENANCE.md).
 
 # Secure IO
 

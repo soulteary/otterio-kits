@@ -1,32 +1,24 @@
 # Go Report Card
 
-**Grade: A+** (98.0%)
+**Grade: A+** (100.0%)
 
 | Metric | Value |
 | ------ | ----- |
 | Files | 12 |
-| Issues | 2 |
+| Issues | 0 |
 
 ## Checks
 
 | Check | Score |
 | ----- | ----- |
-| go_vet | 100% |
 | gofmt | 100% |
-| gocyclo | 83% |
+| go_vet | 100% |
+| gocyclo | 100% |
 | ineffassign | 100% |
 | license | 100% |
 | misspell | 100% |
 
-## Issues
-
-### gocyclo
-
-- `sio/reader-v2.go`
-  - Line 70: cyclomatic complexity 26 for function (*encReaderV20).Read
-  - Line 183: cyclomatic complexity 17 for function (*decReaderV20).Read
-- `sio/sio_test.go`
-  - Line 173: cyclomatic complexity 16 for function TestReader
+No issues found. Nice work!
 
 ---
 

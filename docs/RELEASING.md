@@ -2,7 +2,7 @@
 
 `otterio-kits` maintains six independent Go libraries. One Git commit may change multiple modules, but each module has its own version, tag, and release notes. Changing `simdjson-go` does not require releasing the CRC or encryption libraries. There is no root release `go.mod` or root Go module containing all six libraries.
 
-This is a maintainer runbook. Mainline and module CI are available, but there is currently no automatic release workflow or CI trigger for formal release tags. Maintainers execute the release commands after completing checks. Candidate versions and commands below do not indicate published releases.
+This is a maintainer runbook. Mainline and module CI are available. Formal tag pushes generate quality reports, but do not replace the pre-release native, quality, lint, security, and applicable extended checks. Maintainers create the tag and GitHub Release manually after completing checks. Historical first-release candidates and example commands below are not the current version inventory; consult the [release history](https://github.com/soulteary/otterio-kits/releases).
 
 ## Module identity and first-release candidates
 
@@ -38,7 +38,7 @@ import (
 )
 ```
 
-The six runtime libraries and two helper modules currently declare `go 1.27.2`. This is the minimum consumer Go requirement, not merely the CI compiler version. Older toolchains cannot use these releases with `GOTOOLCHAIN=local`. State the minimum in release notes and explain the impact of future changes separately.
+The six runtime libraries and two helper modules currently declare `go 1.27.3`. This is the minimum consumer Go requirement, not merely the CI compiler version. Older toolchains cannot use these releases with `GOTOOLCHAIN=local`. State the minimum in release notes and explain the impact of future changes separately.
 
 `md5-simd/_gen` is an assembly generator and `simdjson-go/benchmarks` is a comparison tool. They are outside the runtime release list and receive no library release tags. The benchmarks' local `replace => ../` measures the current parent module; runtime libraries do not depend on it. Go module download archives exclude helper directories containing nested `go.mod` files.
 
@@ -88,7 +88,7 @@ The six runtime libraries currently have no `require` dependencies on one anothe
 
 ## Manually running CI at the same SHA
 
-Current workflows have no formal-tag triggers. Run all checks manually before release; pushing a tag does not imply that tests ran. Push the candidate branch to its explicit remote branch and dispatch checks from it:
+Formal tag pushes run the quality-report workflow. Run all required checks before release; report generation alone does not establish that the full release gate passed. Push the candidate branch to its explicit remote branch and dispatch checks from it:
 
 ```sh
 git push origin "refs/heads/$candidate_branch:refs/heads/$candidate_branch"
@@ -162,7 +162,7 @@ EOF
 )
 ```
 
-Use Go 1.27.2 or later. `GOTOOLCHAIN=local` exposes minimum-version problems directly. Check the path/version from `go list -m`, provenance in download output, and the module's `LICENSE*` and `NOTICE` inside `Dir`/`Zip`. Successful public-proxy resolution also puts the version in the module index. If synchronization is pending, verify the remote tag, path, and full SHA, then wait or retry without moving the tag.
+Use Go 1.27.3 or later. `GOTOOLCHAIN=local` exposes minimum-version problems directly. Check the path/version from `go list -m`, provenance in download output, and the module's `LICENSE*` and `NOTICE` inside `Dir`/`Zip`. Successful public-proxy resolution also puts the version in the module index. If synchronization is pending, verify the remote tag, path, and full SHA, then wait or retry without moving the tag.
 
 The other modules can be installed at their corresponding candidate versions. These are separate commands; consumers need not depend on all six:
 

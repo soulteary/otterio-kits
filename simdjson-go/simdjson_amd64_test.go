@@ -129,7 +129,7 @@ func TestParseND(t *testing.T) {
 				}
 				switch typ {
 				case TypeObject:
-					// We must send it throught marshall/unmarshall to match.
+					// We must send it through marshal/unmarshal to match.
 					var want = ref[0]
 					var tmpMap map[string]interface{}
 					err := json.Unmarshal([]byte(want), &tmpMap)
@@ -662,7 +662,7 @@ break"]`,
 				}
 				switch typ {
 				case TypeObject:
-					// We must send it throught marshall/unmarshall to match.
+					// We must send it through marshal/unmarshal to match.
 					var want = ref[0]
 					var tmpMap map[string]interface{}
 					err := json.Unmarshal([]byte(want), &tmpMap)

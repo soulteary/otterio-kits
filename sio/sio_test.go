@@ -199,29 +199,34 @@ func TestReader(t *testing.T) {
 				}
 
 				if version == Version20 {
-					ciphertext := bytes.NewBuffer(nil)
-					encReader, err = EncryptReader(bytes.NewReader(data), config)
-					if err != nil {
-						t.Fatalf("Version %d: Test %d: Failed to create encrypted reader: %v", version, i, err)
-					}
-					if _, err = io.Copy(ciphertext, encReader); err != nil {
-						t.Fatalf("Version %d: Test %d: Failed to encrypted data: %v", version, i, err)
-					}
-
-					plaintext := bytes.NewBuffer(nil)
-					decReaderAt, err := DecryptReaderAt(bytes.NewReader(ciphertext.Bytes()), config)
-					if err != nil {
-						t.Fatalf("Version %d: Test %d: Failed to create decrypted reader: %v", version, i, err)
-					}
-					if _, err = io.Copy(plaintext, io.NewSectionReader(decReaderAt, 0, int64(ciphertext.Len()))); err != nil {
-						t.Fatalf("Version %d: Test %d: Failed to encrypted data: %v", version, i, err)
-					}
-					if !bytes.Equal(data, plaintext.Bytes()) {
-						t.Fatalf("Version %d: Test %d: The plaintexts do not match: %v", version, i, err)
-					}
+					testReaderAtRoundTrip(t, data, config, version, i)
 				}
 			})
 		}
+	}
+}
+
+func testReaderAtRoundTrip(t *testing.T, data []byte, config Config, version byte, i int) {
+	t.Helper()
+	ciphertext := bytes.NewBuffer(nil)
+	encReader, err := EncryptReader(bytes.NewReader(data), config)
+	if err != nil {
+		t.Fatalf("Version %d: Test %d: Failed to create encrypted reader: %v", version, i, err)
+	}
+	if _, err = io.Copy(ciphertext, encReader); err != nil {
+		t.Fatalf("Version %d: Test %d: Failed to encrypted data: %v", version, i, err)
+	}
+
+	plaintext := bytes.NewBuffer(nil)
+	decReaderAt, err := DecryptReaderAt(bytes.NewReader(ciphertext.Bytes()), config)
+	if err != nil {
+		t.Fatalf("Version %d: Test %d: Failed to create decrypted reader: %v", version, i, err)
+	}
+	if _, err = io.Copy(plaintext, io.NewSectionReader(decReaderAt, 0, int64(ciphertext.Len()))); err != nil {
+		t.Fatalf("Version %d: Test %d: Failed to encrypted data: %v", version, i, err)
+	}
+	if !bytes.Equal(data, plaintext.Bytes()) {
+		t.Fatalf("Version %d: Test %d: The plaintexts do not match: %v", version, i, err)
 	}
 }
 

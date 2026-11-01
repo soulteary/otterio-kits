@@ -132,83 +132,7 @@ func (s *md5Server) process(newClients chan newClient) {
 	var clients = make(map[uint64]chan blockInput, Lanes)
 
 	addToLane := func(uid uint64) {
-		cl, ok := clients[uid]
-		if !ok {
-			// Unknown client. Maybe it was already removed.
-			return
-		}
-		// Check if we already have it.
-		for _, lane := range lanes[:lanesFilled] {
-			if lane.uid == uid {
-				return
-			}
-		}
-		// Continue until we get a block or there is nothing on channel
-		for {
-			select {
-			case block, ok := <-cl:
-				if !ok {
-					// Client disconnected
-					delete(clients, uid)
-					delete(s.digests, uid)
-					return
-				}
-				if block.uid != uid {
-					panic(fmt.Errorf("uid mismatch, %d (block) != %d (client)", block.uid, uid))
-				}
-				// If reset message, reset and we're done
-				if block.reset {
-					delete(s.digests, uid)
-					continue
-				}
-
-				// If requesting sum, we will need to maintain state.
-				if block.sumCh != nil {
-					var dig digest
-					d, ok := s.digests[uid]
-					if ok {
-						dig.s[0] = binary.LittleEndian.Uint32(d[0:4])
-						dig.s[1] = binary.LittleEndian.Uint32(d[4:8])
-						dig.s[2] = binary.LittleEndian.Uint32(d[8:12])
-						dig.s[3] = binary.LittleEndian.Uint32(d[12:16])
-					} else {
-						dig.s[0], dig.s[1], dig.s[2], dig.s[3] = init0, init1, init2, init3
-					}
-
-					sum := sumResult{}
-					// Add end block to current digest.
-					blockScalar(&dig.s, block.msg)
-
-					binary.LittleEndian.PutUint32(sum.digest[0:], dig.s[0])
-					binary.LittleEndian.PutUint32(sum.digest[4:], dig.s[1])
-					binary.LittleEndian.PutUint32(sum.digest[8:], dig.s[2])
-					binary.LittleEndian.PutUint32(sum.digest[12:], dig.s[3])
-					block.sumCh <- sum
-					if block.msg != nil {
-						s.buffers <- block.msg
-					}
-					continue
-				}
-				if len(block.msg) == 0 {
-					continue
-				}
-				lanes[lanesFilled] = block
-				lanesFilled++
-				return
-			default:
-				return
-			}
-		}
-	}
-	addNewClient := func(cl newClient) {
-		if _, ok := clients[cl.uid]; ok {
-			panic("internal error: duplicate client registration")
-		}
-		clients[cl.uid] = cl.input
-	}
-
-	allLanesFilled := func() bool {
-		return lanesFilled == Lanes || lanesFilled >= len(clients)
+		s.addToLane(clients, &lanes, &lanesFilled, uid)
 	}
 
 	for {
@@ -219,7 +143,7 @@ func (s *md5Server) process(newClients chan newClient) {
 				if !ok {
 					return
 				}
-				addNewClient(cl)
+				registerClient(clients, cl)
 				// Check if it already sent a payload.
 				addToLane(cl.uid)
 				continue
@@ -229,13 +153,13 @@ func (s *md5Server) process(newClients chan newClient) {
 		}
 
 	fillLanes:
-		for !allLanesFilled() {
+		for !allLanesFilled(lanesFilled, len(clients)) {
 			select {
 			case cl, ok := <-newClients:
 				if !ok {
 					return
 				}
-				addNewClient(cl)
+				registerClient(clients, cl)
 
 			case uid := <-s.cycle:
 				addToLane(uid)
@@ -246,23 +170,16 @@ func (s *md5Server) process(newClients chan newClient) {
 		}
 
 		// If we did not fill all lanes, check if there is more waiting
-		if !allLanesFilled() {
+		if !allLanesFilled(lanesFilled, len(clients)) {
 			runtime.Gosched()
 			for uid := range clients {
 				addToLane(uid)
-				if allLanesFilled() {
+				if allLanesFilled(lanesFilled, len(clients)) {
 					break
 				}
 			}
 		}
-		if false {
-			if !allLanesFilled() {
-				fmt.Println("Not all lanes filled", lanesFilled, "of", len(clients))
-				//pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
-			} else if true {
-				fmt.Println("all lanes filled")
-			}
-		}
+
 		// Process the lanes we could collect
 		s.blocks(lanes[:lanesFilled])
 
@@ -271,9 +188,91 @@ func (s *md5Server) process(newClients chan newClient) {
 		// Add all current queued
 		for uid := range clients {
 			addToLane(uid)
-			if allLanesFilled() {
+			if allLanesFilled(lanesFilled, len(clients)) {
 				break
 			}
+		}
+	}
+}
+
+func registerClient(clients map[uint64]chan blockInput, cl newClient) {
+	if _, ok := clients[cl.uid]; ok {
+		panic("internal error: duplicate client registration")
+	}
+	clients[cl.uid] = cl.input
+}
+
+func allLanesFilled(filled, clients int) bool {
+	return filled == Lanes || filled >= clients
+}
+
+// addToLane handles one client without changing the scheduling order.
+func (s *md5Server) addToLane(clients map[uint64]chan blockInput, lanes *lanesInfo, lanesFilled *int, uid uint64) {
+	cl, ok := clients[uid]
+	if !ok {
+		// Unknown client. Maybe it was already removed.
+		return
+	}
+	// Check if we already have it.
+	for _, lane := range lanes[:*lanesFilled] {
+		if lane.uid == uid {
+			return
+		}
+	}
+	// Continue until we get a block or there is nothing on channel
+	for {
+		select {
+		case block, ok := <-cl:
+			if !ok {
+				// Client disconnected
+				delete(clients, uid)
+				delete(s.digests, uid)
+				return
+			}
+			if block.uid != uid {
+				panic(fmt.Errorf("uid mismatch, %d (block) != %d (client)", block.uid, uid))
+			}
+			// If reset message, reset and we're done
+			if block.reset {
+				delete(s.digests, uid)
+				continue
+			}
+
+			// If requesting sum, we will need to maintain state.
+			if block.sumCh != nil {
+				var dig digest
+				d, ok := s.digests[uid]
+				if ok {
+					dig.s[0] = binary.LittleEndian.Uint32(d[0:4])
+					dig.s[1] = binary.LittleEndian.Uint32(d[4:8])
+					dig.s[2] = binary.LittleEndian.Uint32(d[8:12])
+					dig.s[3] = binary.LittleEndian.Uint32(d[12:16])
+				} else {
+					dig.s[0], dig.s[1], dig.s[2], dig.s[3] = init0, init1, init2, init3
+				}
+
+				sum := sumResult{}
+				// Add end block to current digest.
+				blockScalar(&dig.s, block.msg)
+
+				binary.LittleEndian.PutUint32(sum.digest[0:], dig.s[0])
+				binary.LittleEndian.PutUint32(sum.digest[4:], dig.s[1])
+				binary.LittleEndian.PutUint32(sum.digest[8:], dig.s[2])
+				binary.LittleEndian.PutUint32(sum.digest[12:], dig.s[3])
+				block.sumCh <- sum
+				if block.msg != nil {
+					s.buffers <- block.msg
+				}
+				continue
+			}
+			if len(block.msg) == 0 {
+				continue
+			}
+			lanes[*lanesFilled] = block
+			*lanesFilled++
+			return
+		default:
+			return
 		}
 	}
 }

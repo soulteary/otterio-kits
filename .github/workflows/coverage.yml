@@ -61,12 +61,12 @@ jobs:
     - name: Validate native report environment
       shell: bash
       run: bash scripts/check-reports.sh environment "${{ matrix.module }}" "reports/coverage/${{ matrix.module }}"
-    - name: Test, race and coverage (GTR v1.1.2)
+    - name: Test, race and coverage (GTR v1.1.3)
       id: go_test_report
-      uses: soulteary/go-test-report-action@bf04b539f7bf2a6f67d602da4259904b3dcdeba1
+      uses: soulteary/go-test-report-action@2760569379a1c95a195c602872ba00cd61495d89
       with:
         directory: ${{ matrix.module }}
-        version: ${{ runner.os == 'macOS' && 'source' || 'v1.1.2' }}
+        version: ${{ runner.os == 'macOS' && 'source' || 'v1.1.3' }}
         packages: ./...
         race: 'true'
         cover_mode: atomic
@@ -78,13 +78,13 @@ jobs:
         json_output: .github/reports/${{ matrix.module }}/go-test-report.json
         badge_output: .github/reports/${{ matrix.module }}/coverage.svg
         raw_output: reports/coverage/${{ matrix.module }}/raw
-    - name: Go quality report (v1.1.3)
+    - name: Go quality report (v1.1.4)
       id: go_report_card
-      uses: soulteary/goreportcard-action@fc43049a5fe61c3313294d217c2a783f375a7970
+      uses: soulteary/goreportcard-action@d4669a9fbea514f5995d749177630ebfee755789
       if: "!cancelled() && steps.report_cleanup.outcome == 'success'"
       with:
         directory: ${{ matrix.module }}
-        version: v1.1.3
+        version: v1.1.4
         threshold: '0'
         report: 'true'
         commit: 'false'
