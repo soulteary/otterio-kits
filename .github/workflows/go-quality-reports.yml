@@ -165,7 +165,7 @@ jobs:
         ref: ${{ needs.release_gate.outputs.source_sha }}
         fetch-depth: 0
         persist-credentials: false
-    - uses: actions/setup-go@v7.0.0
+    - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
       with:
         go-version-file: go.work
         cache-dependency-path: |
@@ -206,13 +206,13 @@ jobs:
         json_output: .github/reports/${{ matrix.module }}/go-test-report.json
         badge_output: .github/reports/${{ matrix.module }}/coverage.svg
         raw_output: reports/coverage/${{ matrix.module }}/raw
-    - name: Go quality report (v1.1.4)
+    - name: Go quality report (v1.1.7)
       id: go_report_card
-      uses: soulteary/goreportcard-action@d4669a9fbea514f5995d749177630ebfee755789
+      uses: soulteary/goreportcard-action@9744d0297ca0116cd4ef83e4ff6f3ba42a65a24d # v1.1.7
       if: "!cancelled() && steps.report_cleanup.outcome == 'success'"
       with:
         directory: ${{ matrix.module }}
-        version: v1.1.4
+        version: "v1.1.7"
         threshold: '0'
         report: 'true'
         commit: 'false'
