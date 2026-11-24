@@ -211,13 +211,14 @@ benchstat old.txt new.txt
 
 ## Release Process
 
-(For maintainers)
+SIO is released independently from this multi-module repository. Follow the
+[repository release procedure](../docs/RELEASING.md) to review the changes, validate
+the exact release commit, and verify an external consumer.
 
-1. Update version numbers and CHANGELOG
-2. Run full test suite including race detector
-3. Tag release: `git tag v1.x.x`
-4. Push tag: `git push origin v1.x.x`
-5. GitHub Actions will create the release
+Use a directory-prefixed tag such as `sio/v0.5.6` at the verified commit. Tag
+workflows generate reports; maintainers create the corresponding GitHub Release
+with `--latest=false` after checking the public tag. Do not create a root `vX.Y.Z`
+tag or assume that GitHub Actions publishes the Release automatically.
 
 ## Common Tasks
 
