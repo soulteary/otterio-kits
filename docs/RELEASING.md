@@ -38,7 +38,7 @@ import (
 )
 ```
 
-The six runtime libraries and two helper modules currently declare `go 1.27.3`. This is the minimum consumer Go requirement, not merely the CI compiler version. Older toolchains cannot use these releases with `GOTOOLCHAIN=local`. State the minimum in release notes and explain the impact of future changes separately.
+The six runtime libraries and two helper modules currently declare `go 1.27.4`. This is the minimum consumer Go requirement, not merely the CI compiler version. Older toolchains cannot use these releases with `GOTOOLCHAIN=local`. State the minimum in release notes and explain the impact of future changes separately.
 
 `md5-simd/_gen` is an assembly generator and `simdjson-go/benchmarks` is a comparison tool. They are outside the runtime release list and receive no library release tags. The benchmarks' local `replace => ../` measures the current parent module; runtime libraries do not depend on it. Go module download archives exclude helper directories containing nested `go.mod` files.
 
@@ -162,7 +162,7 @@ EOF
 )
 ```
 
-Use Go 1.27.3 or later. `GOTOOLCHAIN=local` exposes minimum-version problems directly. Check the path/version from `go list -m`, provenance in download output, and the module's `LICENSE*` and `NOTICE` inside `Dir`/`Zip`. Successful public-proxy resolution also puts the version in the module index. If synchronization is pending, verify the remote tag, path, and full SHA, then wait or retry without moving the tag.
+Use Go 1.27.4 or later. `GOTOOLCHAIN=local` exposes minimum-version problems directly. Check the path/version from `go list -m`, provenance in download output, and the module's `LICENSE*` and `NOTICE` inside `Dir`/`Zip`. Successful public-proxy resolution also puts the version in the module index. If synchronization is pending, verify the remote tag, path, and full SHA, then wait or retry without moving the tag.
 
 The other modules can be installed at their corresponding candidate versions. These are separate commands; consumers need not depend on all six:
 

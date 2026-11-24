@@ -7,6 +7,7 @@ English is the primary language for repository documentation. Keep new and updat
 - [Maintenance](MAINTENANCE.md): daily checks, original history, upstream updates, and selective patches.
 - [Releasing](RELEASING.md): independent module versions, candidate commits, CI, tags, and external consumer checks.
 - [Licenses and provenance](LICENSES.md): retained license materials and outstanding source-history checks.
+- [November 25 dependency maintenance](releases/2026-11-25-dependencies.md): Go 1.27.4, dependency changes, and independent patch candidates.
 
 ## Continuous integration
 
