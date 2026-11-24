@@ -7,9 +7,9 @@
     "skipped": 1
   },
   "coverage": {
-    "covered_statements": 663,
-    "total_statements": 963,
-    "percentage": 68.85,
+    "covered_statements": 673,
+    "total_statements": 973,
+    "percentage": 69.17,
     "threshold": 0
   },
   "packages": [
@@ -18,7 +18,7 @@
       "status": "pass",
       "tests": 23,
       "failed": 0,
-      "coverage": 78.65
+      "coverage": 78.9
     },
     {
       "name": "cmd/ncrypt",

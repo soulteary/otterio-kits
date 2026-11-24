@@ -8,12 +8,12 @@
 | Passed | 64 |
 | Failed | 0 |
 | Skipped | 1 |
-| Coverage | 63.95% |
+| Coverage | 63.92% |
 | Threshold | 0.00% |
 
 ### Packages
 
 | Package | Status | Tests | Failed | Coverage |
 | --- | --- | --- | --- | --- |
-| . | pass | 65 | 0 | 71.99% |
+| . | pass | 65 | 0 | 71.96% |
 | examples/openrtb | no\_tests | 0 | 0 | 0.00% |
